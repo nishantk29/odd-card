@@ -35,6 +35,27 @@ test('no network calls or external resources in the app', () => {
   assert.ok(!/https?:\/\//.test(html.replace(/http:\/\/www\.w3\.org\/2000\/svg/g, '')));
 });
 
+const css = readFileSync(join(pub, 'styles.css'), 'utf8');
+const appSrc = readFileSync(join(jsDir, 'app.js'), 'utf8');
+
+test('regression: flat mode does not override score bar widths', () => {
+  assert.ok(!/\.fill\{[^}]*transform:none/.test(css));
+});
+
+test('regression: scoreboard SPY badge sits outside the ellipsised name', () => {
+  assert.match(appSrc, /<span class="nt">\$\{esc\(g\.names\[i\]\)\}<\/span>\$\{r\.spies/);
+  assert.match(css, /\.srow \.nm \.nt\{[^}]*text-overflow:ellipsis/);
+  assert.ok(!/\.srow \.nm\{[^}]*text-overflow/.test(css));
+});
+
+test('regression: Add player picks an unused default seat name', () => {
+  assert.match(appSrc, /while \(S\.setup\.names\.includes\(`Seat \$\{k\}`\)\) k\+\+/);
+});
+
+test('regression: winhome keeps target as well as names', () => {
+  assert.match(appSrc, /winhome\(\) \{[^}]*S\.setup\.target = G\(\)\.target/);
+});
+
 test('FAQ: 12+ entries, search is case-insensitive with <mark> highlights', () => {
   assert.ok(FAQ.length >= 12);
   assert.equal(faqResults('').match(/<details/g).length, FAQ.length);
