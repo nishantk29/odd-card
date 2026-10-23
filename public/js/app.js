@@ -133,7 +133,7 @@ function scoreBody(g) {
   const prev = g.scores.map((s, i) => s - r.delta[i]);
   const top = Math.max(g.target, ...g.scores);
   const order = g.names.map((_, i) => i).sort((a, b) => g.scores[b] - g.scores[a] || a - b);
-  const rows = order.map(i => `<div class="srow"><span class="nm">${esc(g.names[i])}${r.spies.includes(i) ? '<span>SPY</span>' : ''}</span>
+  const rows = order.map(i => `<div class="srow"><span class="nm"><span class="nt">${esc(g.names[i])}</span>${r.spies.includes(i) ? '<span>SPY</span>' : ''}</span>
     <span class="pts"><span class="cnt" data-i="${i}" data-from="${prev[i]}" data-to="${g.scores[i]}">${g.scores[i]}</span>${r.delta[i] ? `<span class="gain">+${r.delta[i]}</span>` : ''}</span>
     <span class="track"><span class="fill" data-i="${i}" data-from="${prev[i] / top}" data-to="${g.scores[i] / top}" style="transform:scaleX(${g.scores[i] / top})"></span></span></div>`).join('');
   return stage('felt', `<span class="eyebrow">Scoreboard · Round ${r.no}</span><p class="mid">${E.OUTCOME_TEXT[r.outcome]}</p>
@@ -258,7 +258,7 @@ const actions = {
   resume() { S.view = 'game'; },
   home() { S.view = 'home'; T.sheet = null; T.confirm = false; },
   faq() { T.sheet = 'faq'; },
-  add() { if (S.setup.names.length < E.MAX_PLAYERS) S.setup.names.push(`Seat ${S.setup.names.length + 1}`); },
+  add() { if (S.setup.names.length < E.MAX_PLAYERS) { let k = S.setup.names.length + 1; while (S.setup.names.includes(`Seat ${k}`)) k++; S.setup.names.push(`Seat ${k}`); } },
   remove(el) { if (S.setup.names.length > E.MIN_PLAYERS) S.setup.names.splice(+el.dataset.seat, 1); },
   tminus() { S.setup.target = Math.max(E.MIN_TARGET, S.setup.target - 1); },
   tplus() { S.setup.target = Math.min(E.MAX_TARGET, S.setup.target + 1); },
@@ -273,7 +273,7 @@ const actions = {
   newNo() { T.confirm = false; },
   newYes() { S.game = null; S.view = 'setup'; T.sheet = null; T.confirm = false; },
   again() { S.setup.names = G().names.slice(); S.setup.target = G().target; startGame(); },
-  winhome() { S.setup.names = G().names.slice(); S.game = null; S.view = 'home'; },
+  winhome() { S.setup.names = G().names.slice(); S.setup.target = G().target; S.game = null; S.view = 'home'; },
   clearq() { T.q = ''; const i = document.getElementById('faqq'); i.value = ''; document.getElementById('faqres').innerHTML = faqResults(''); i.focus(); document.querySelector('.search .clear').hidden = true; return 'done'; },
   toggleWord() { T.hidden = !T.hidden; },
   next() { dispatch({ type: 'NEXT' }); return 'done'; },
