@@ -1,6 +1,6 @@
 // The Odd Card: host UI. All rules live in engine.js; this file renders state and dispatches actions.
 import * as E from './engine.js';
-import { esc, cardChip, titleArt, agentIcon, spyIcon, hostIcon, faqIcon, playIcon } from './art.js';
+import { esc, cardChip, titleArt, agentIcon, spyIcon, icons } from './art.js';
 import { faqResults } from './faq.js';
 
 const KEY = 'oddcard.v1';
@@ -47,27 +47,27 @@ function playerButtons(selected, extra = '') {
 // ---- screens -----------------------------------------------------------
 function homeHTML() {
   const g = G();
-  const resume = g && g.phase !== 'over' ? `<button class="tile t-spy" data-act="resume"><span class="badge">${hostIcon()}</span><h2>Resume game</h2><p>Round ${g.round.no} · ${g.names.length} players</p></button>` : '';
-  return `<main class="wrap home"><header>${titleArt()}<h1>The Odd Card</h1><p class="pill sub">A spy game for a regular deck</p></header>
-  <div class="stack">${resume}
-    <button class="tile t-felt" data-act="play"><span class="badge">${playIcon()}</span><h2>New game</h2><p>4 to 12 players plus you, the storyteller.</p></button>
+  const resume = g && g.phase !== 'over' ? `<button class="tile t-spy" data-act="resume"><h2>Resume game</h2><p>Round ${g.round.no} · ${g.names.length} players</p>${icons.go()}</button>` : '';
+  return `<main class="wrap home"><header>${titleArt()}<h1>The Odd Card</h1><p class="sub">A spy game for a regular deck</p></header>
+  <div class="stack">
+    <button class="tile t-gold" data-act="play"><h2>New game</h2><p>4 to 12 players plus you, the storyteller.</p>${icons.go()}</button>${resume}
     <section class="how"><h2>How to play</h2><ol>
       <li><b>Deal.</b> The app tells you which red and black cards to pull. Everyone gets one, face down.</li>
       <li><b>Night.</b> Red cards (agents) see the secret word. Black cards (spies) only see the category.</li>
       <li><b>Clues.</b> Two laps: one hint word each. Don't give the word away.</li>
       <li><b>Vote.</b> On three, point at the spy. The accused flips their card.</li>
       <li><b>Score.</b> Spies score by hiding, agents by catching. First to the target wins.</li></ol></section>
-    <button class="tile t-gold" data-act="faq"><span class="badge">${faqIcon()}</span><h2>FAQ</h2><p>Rules, cards and edge cases. Searchable.</p></button>
+    <button class="faqlink" data-act="faq"><span><b>Stuck on a rule?</b> Search the FAQ</span>${icons.go()}</button>
   </div></main>`;
 }
 
 function setupHTML() {
   const { names, target } = S.setup;
   const n = names.length, k = E.spyCount(n);
-  return `<main class="wrap"><div class="bar"><button class="iconbtn" data-act="home" aria-label="Home">‹</button><span class="grow"></span><button class="iconbtn" data-act="faq" aria-label="FAQ">?</button></div>
+  return `<main class="wrap"><div class="bar"><button class="iconbtn" data-act="home" aria-label="Home">${icons.back()}</button><span class="grow"></span><button class="iconbtn" data-act="faq" aria-label="FAQ">?</button></div>
   <div class="screen">${stage('felt', `<span class="eyebrow">Setup</span><h1 class="mid">Players, in seat order</h1>
     <p class="note">${n} players · ${k} spy${k > 1 ? 's' : ''} per round. You, the storyteller, don't play.</p>
-    <div class="names">${names.map((v, i) => `<div class="nrow"><span class="n">${i + 1}</span><input data-name="${i}" value="${esc(v)}" maxlength="20" aria-label="Seat ${i + 1} name" autocomplete="off"><button class="x" data-act="remove" data-seat="${i}" aria-label="Remove seat ${i + 1}" ${n <= E.MIN_PLAYERS ? 'disabled' : ''}>×</button></div>`).join('')}</div>
+    <div class="names">${names.map((v, i) => `<div class="nrow"><span class="n">${i + 1}</span><input data-name="${i}" value="${esc(v)}" maxlength="20" aria-label="Seat ${i + 1} name" autocomplete="off"><button class="x" data-act="remove" data-seat="${i}" aria-label="Remove seat ${i + 1}" ${n <= E.MIN_PLAYERS ? 'disabled' : ''}>${icons.close()}</button></div>`).join('')}</div>
     <button class="addbtn" data-act="add" ${n >= E.MAX_PLAYERS ? 'disabled' : ''}>+ Add player</button>
     <h2 class="mid">Play to</h2><div class="stepper"><button data-act="tminus" aria-label="Lower target" ${target <= E.MIN_TARGET ? 'disabled' : ''}>−</button><output>${target}</output><button data-act="tplus" aria-label="Raise target" ${target >= E.MAX_TARGET ? 'disabled' : ''}>+</button><span class="pill">points</span></div>`)}</div>
   <div class="dock"><button class="next" data-act="start">Deal round 1</button></div></main>`;
@@ -153,7 +153,7 @@ function gameHTML() {
   else if (p === 'flip') dock = next('Show scores');
   else if (p === 'score') dock = next(g.win.status === 'win' ? 'See the winner' : g.win.status === 'tie' ? 'Tiebreak round' : 'Next round');
   return `<main class="wrap"><div class="bar"><span class="pill gold">Round ${r.no}</span><span class="pill">First to ${g.target}</span><span class="grow"></span>
-    <button class="iconbtn" data-act="menu" aria-label="Host menu">☰</button></div><div class="screen">${body}</div>${dock ? `<div class="dock">${dock}</div>` : ''}</main>`;
+    <button class="iconbtn" data-act="menu" aria-label="Host menu">${icons.menu()}</button></div><div class="screen">${body}</div>${dock ? `<div class="dock">${dock}</div>` : ''}</main>`;
 }
 
 // ---- sheets ------------------------------------------------------------
@@ -180,7 +180,7 @@ function historySheet() {
 
 function faqSheet() {
   return `<h2>FAQ</h2><div class="search"><svg class="mag" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="6"/><path d="M13 13l5 5"/></svg>
-    <input id="faqq" type="search" placeholder="Search the FAQ" value="${esc(T.q)}" aria-label="Search the FAQ" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="clear" data-act="clearq" aria-label="Clear search" ${T.q ? '' : 'hidden'}>✕</button></div>
+    <input id="faqq" type="search" placeholder="Search the FAQ" value="${esc(T.q)}" aria-label="Search the FAQ" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="clear" data-act="clearq" aria-label="Clear search" ${T.q ? '' : 'hidden'}>${icons.close()}</button></div>
     <div class="sbody" id="faqres">${faqResults(T.q)}</div><button class="mbtn" style="margin-top:14px;justify-content:center" data-act="close">Close</button>`;
 }
 
@@ -199,12 +199,12 @@ function winPopup() {
     return `<i style="--x:${Math.round(Math.random() * 100)}%;--col:${col};--d:${(2.6 + Math.random() * 2).toFixed(2)}s;--dl:${(Math.random() * 2.5).toFixed(2)}s;--dx:${Math.round(Math.random() * 120 - 60)}px;--r:${Math.round(360 + Math.random() * 540)}deg"></i>`;
   }).join('')}</div>`;
   return `<div class="win ${spyWon ? 'spy' : 'agent'}" role="dialog" aria-modal="true" aria-label="Game over">${confetti}<div class="win-in">
-    <span class="eyebrow pill gold" style="align-self:flex-start">Game over · round ${r.no}</span>
+    <span class="eyebrow">Game over · round ${r.no}</span>
     <h1 class="headline">${names} win${leaders.length > 1 ? '' : 's'}!</h1>
     <p class="reason">${esc(g.names[leaders[0]])} reached ${pts} points (target ${g.target}). ${E.OUTCOME_TEXT[r.outcome]} The word was <b>${esc(r.word)}</b>.</p>
     <div class="reveal">${reveal}</div>
     <button class="next" data-act="again" style="margin-top:8px">Play again (same players)</button>
-    <button class="next teal" data-act="winhome" style="min-height:64px;font-size:28px">Home</button></div></div>`;
+    <button class="mbtn" data-act="winhome" style="justify-content:center">Home</button></div></div>`;
 }
 
 function sheetsHTML() {
