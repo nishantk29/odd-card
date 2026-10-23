@@ -1,0 +1,8 @@
+{
+  "name": "odd-card",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The Odd Card: a quick spy/impostor party game for a regular 52-card deck, with a phone as the storyteller.",
+  "scripts": { "test": "node --test test/" }
+}
