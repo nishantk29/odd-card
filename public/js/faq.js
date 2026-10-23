@@ -16,6 +16,7 @@ export const FAQ = [
   { q: 'How is a round scored?', a: 'Each spy who was not accused: +2. Accused spy who guesses the word: +1. Accused spy who guesses wrong: every agent +1. Accused agent (red card): each spy +2.' },
   { q: 'What if two players tie for the top score?', a: 'If the top score is at or above the target and two or more players share it, the game keeps going: play one more round, everyone still plays. The tied leaders are shown. Repeat until one player is alone on top.' },
   { q: 'What if the accused spy guesses a word that is close?', a: 'The host decides. A good house rule: the exact word, or an obvious synonym or plural, counts as Right.' },
+  { q: 'Can I play without internet?', a: '1. Open The Odd Card once while you’re online, or install it: on iPhone tap Share, then Add to Home Screen; on Android tap Install app. 2. After that it opens without internet. 3. Choose New Game as usual: The Odd Card runs on the Host’s phone, so nobody else needs a connection. On iPhone, the Home Screen app and Safari keep separate copies, so open the one you’ll use while you’re online.', k: 'offline wifi internet install' },
   { q: 'Can I undo a mistake?', a: 'Yes. Open the menu and tap "Undo last step". You can step back as many times as you need, even across rounds.' },
   { q: 'What if I refresh the page?', a: 'The game is saved on this device after every step, so a refresh resumes where you were. Nothing is sent over the network.' },
   { q: 'Quick reference', a: 'Red = Agent, sees the word. Black = Spy, sees the category. One clue word each, two laps. Vote on three. Spy not accused +2. Accused spy right +1. Accused spy wrong: agents +1. Accused agent: spies +2. Tie vote: spies +2.' },
@@ -30,7 +31,7 @@ function highlight(text, q) {
 }
 export function faqResults(q) {
   const t = q.trim().toLowerCase();
-  const hits = FAQ.filter(f => !t || f.q.toLowerCase().includes(t) || f.a.toLowerCase().includes(t));
+  const hits = FAQ.filter(f => !t || f.q.toLowerCase().includes(t) || f.a.toLowerCase().includes(t) || (f.k || '').includes(t));
   if (!hits.length) return '<p class="nomatch">No matches</p>';
   return hits.map(f => `<details class="qa"${t ? ' open' : ''}><summary>${highlight(f.q, t)}</summary><p>${highlight(f.a, t)}</p></details>`).join('');
 }
