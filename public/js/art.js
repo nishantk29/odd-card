@@ -18,13 +18,15 @@ export function titleArt() {
     d: `<path fill="${col}" d="M12 2l8 10-8 10-8-10z"/>`,
     c: `<g fill="${col}"><circle cx="12" cy="7" r="5"/><circle cx="6.5" cy="14" r="5"/><circle cx="17.5" cy="14" r="5"/><path d="M10 14h4l2 8H8z"/></g>`,
   })[k];
-  const cards = [['Q', 'h'], ['7', 'd'], ['5', 'h'], ['8', 'c', 1], ['9', 'd'], ['2', 'h']];
-  const w = 48, gap = 10, x0 = (360 - (cards.length * w + (cards.length - 1) * gap)) / 2;
-  const face = ([rank, k, odd], i) => {
-    const x = x0 + i * (w + gap), y = odd ? 14 : 34, ink = odd ? '#FFF7E6' : '#E5383B';
-    return `<g transform="translate(${x} ${y})"><rect width="${w}" height="76" rx="7" fill="${odd ? '#111114' : '#FFF7E6'}" stroke="${odd ? '#F5C542' : '#E5383B'}" stroke-width="3"/>
-      <text x="8" y="24" font-size="19" font-weight="900" fill="${ink}" font-family="Rubik,system-ui,sans-serif">${rank}</text>
-      <g transform="translate(12 36) scale(1.05)">${suit(k, ink)}</g></g>`;
+  const cards = [['Q', 'h', 0, 36], ['7', 'd', 0, 32], ['5', 'h', 0, 38], ['8', 'c', 1, 8], ['9', 'd', 0, 34], ['2', 'h', 0, 38]];
+  const gap = 9, wOf = odd => (odd ? 66 : 44), total = cards.reduce((n, c) => n + wOf(c[2]), 0) + (cards.length - 1) * gap;
+  let x = (360 - total) / 2;
+  const face = ([rank, k, odd, y]) => {
+    const w = wOf(odd), h = odd ? 100 : 72, ink = odd ? '#FFF7E6' : '#E5383B', at = x;
+    x += w + gap;
+    return `<g transform="translate(${at} ${y})"><rect width="${w}" height="${h}" rx="${odd ? 9 : 6}" fill="${odd ? '#111114' : '#FFF7E6'}" stroke="${odd ? '#F5C542' : '#E5383B'}" stroke-width="3"/>
+      <text x="${odd ? 10 : 7}" y="${odd ? 30 : 22}" font-size="${odd ? 25 : 18}" font-weight="900" fill="${odd ? '#F5C542' : ink}" font-family="Rubik,system-ui,sans-serif">${rank}</text>
+      <g transform="translate(${odd ? 12 : 10} ${odd ? 44 : 34}) scale(${odd ? 1.75 : 1})">${suit(k, ink)}</g></g>`;
   };
   return `<svg viewBox="0 0 360 120" role="img" aria-label="Six playing cards in a row: five red, and one black card pulled up out of line" class="title-art">
     <rect width="360" height="120" fill="#0E7A4B"/>${cards.map(face).join('')}
@@ -37,7 +39,7 @@ export const icons = {
   back: () => mark('<path d="M15 5l-7 7 7 7"/>'),
   menu: () => mark('<path d="M4 7h16M4 12h16M4 17h16"/>'),
   close: () => mark('<path d="M6 6l12 12M18 6L6 18"/>'),
-  go: () => mark('<path d="M4 12h15M13 5l7 7-7 7"/>', 3),
+  go: () => mark('<path d="M9 5l7 7-7 7"/>'),
 };
 
 // One icon per role (SVG, 64x64).
