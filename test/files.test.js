@@ -29,6 +29,7 @@ test('every public/js module is imported somewhere (or is the html entry)', () =
 
 test('no network calls or external resources in the app', () => {
   for (const f of readdirSync(jsDir)) {
+    if (f === 'phones.js') continue; // Phones mode: the only module that talks to the room server (same-origin /api and /ws)
     const src = readFileSync(join(jsDir, f), 'utf8');
     assert.ok(!/fetch\(|XMLHttpRequest|WebSocket|https?:\/\//.test(src.replace(/http:\/\/www\.w3\.org\/2000\/svg/g, '')), `${f} touches the network`);
   }
@@ -90,11 +91,22 @@ test('removed eyes-open night: no copy mentions it anywhere', () => {
   }
 });
 
-test('hold-to-reveal: one shared card template for both roles, one haptic call', () => {
-  assert.equal((appSrc.match(/class="holdcard"/g) || []).length, 1);
+test('Phones mode talks only to its own origin', () => {
+  const src = readFileSync(join(jsDir, 'phones.js'), 'utf8');
+  assert.ok(!/https?:\/\//.test(src));
+  assert.ok(/fetch\(`\/api\//.test(src) && /fetch\('\/api\/create'/.test(src));
+});
+
+test('hold-to-reveal: one shared card template for both roles and both modes, one haptic call', () => {
+  const hold = readFileSync(join(jsDir, 'holdcard.js'), 'utf8');
+  const phonesSrc = readFileSync(join(jsDir, 'phones.js'), 'utf8');
+  assert.equal((hold.match(/class="holdcard"/g) || []).length, 1);
+  assert.equal((appSrc.match(/class="holdcard"/g) || []).length + (phonesSrc.match(/class="holdcard"/g) || []).length, 0);
+  assert.ok(/v\.secret\.odd \? 'You’re the Odd Card' : v\.secret\.word/.test(phonesSrc));
   assert.ok(/r\.spies\.includes\(r\.pass\) \? 'You’re the Odd Card' : r\.word/.test(appSrc));
-  assert.equal((appSrc.match(/navigator\.vibrate/g) || []).length, 2); // guard + call, in buzz()
-  assert.match(appSrc, /const buzz = \(\) => \{ try \{ if \(S\.haptics && navigator\.vibrate\)/);
+  assert.equal((hold.match(/navigator\.vibrate/g) || []).length, 2); // guard + call, in buzz()
+  assert.equal((appSrc.match(/navigator\.vibrate/g) || []).length + (phonesSrc.match(/navigator\.vibrate/g) || []).length, 0);
+  assert.match(hold, /export const buzz = \(\) => \{ try \{ if \(cfg\.haptics\(\) && navigator\.vibrate\)/);
   assert.match(css, /\.hc-front strong\{[^}]*min-height/);
 });
 

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "The Odd Card: a word game for 4–12 players. Pass one phone around, give clues, find the Odd Card.",
-  "scripts": { "test": "node --test test/*.test.js" }
+  "description": "The Odd Card: a word game for 4–12 players. Pass one phone around, or play on everyone’s own phone.",
+  "scripts": { "dev": "wrangler dev", "test": "node --test test/*.test.js", "deploy": "wrangler deploy" },
+  "devDependencies": { "esbuild": "^0.27.3", "wrangler": "^4" }
 }
