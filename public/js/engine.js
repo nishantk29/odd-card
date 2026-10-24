@@ -1,5 +1,5 @@
 // The Odd Card: pure game logic, no DOM. createGame(settings) / apply(state, action) -> new state.
-import { ALL_WORDS } from './words.js';
+import { ALL_WORDS, WORDS, GRID_SIZE } from './words.js';
 
 export const MIN_PLAYERS = 4;
 export const MAX_PLAYERS = 12;
@@ -8,17 +8,10 @@ export const MAX_TARGET = 10;
 export const DEFAULT_TARGET = 6;
 const MAX_UNDO = 120;
 
-export const spyCount = n => (n >= 8 ? 2 : 1);
+export const MODES = ['classic', 'grid'];
+export { GRID_SIZE };
 
-// ---- cards -------------------------------------------------------------
-export const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-export const SUITS = {
-  H: { glyph: '♥', color: 'red', name: 'hearts' },
-  D: { glyph: '♦', color: 'red', name: 'diamonds' },
-  C: { glyph: '♣', color: 'black', name: 'clubs' },
-  S: { glyph: '♠', color: 'black', name: 'spades' },
-};
-export const cardText = c => `${c.rank}${SUITS[c.suit].glyph}`;
+export const spyCount = n => (n >= 8 ? 2 : 1);
 
 function shuffle(arr, rnd) {
   const a = arr.slice();
@@ -27,15 +20,6 @@ function shuffle(arr, rnd) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
-}
-const byRank = (a, b) => RANKS.indexOf(a.rank) - RANKS.indexOf(b.rank) || a.suit.localeCompare(b.suit);
-const pick = (suits, count, rnd) => shuffle(RANKS.flatMap(rank => suits.map(suit => ({ rank, suit }))), rnd).slice(0, count).sort(byRank);
-
-// The exact cards to pull from the deck: (n - spies) red, spies black, all distinct.
-export function setupCards(n, rnd = Math.random) {
-  if (!Number.isInteger(n) || n < MIN_PLAYERS || n > MAX_PLAYERS) throw new Error(`Players must be ${MIN_PLAYERS}-${MAX_PLAYERS}`);
-  const s = spyCount(n);
-  return { red: pick(['H', 'D'], n - s, rnd), black: pick(['C', 'S'], s, rnd) };
 }
 
 // ---- rng (state-carried so apply stays reproducible) --------------------
@@ -50,50 +34,34 @@ function rngOf(st) {
 }
 
 // ---- cues ---------------------------------------------------------------
-export const NIGHT = [
-  { id: 'close', lines: [{ type: 'say', text: 'Everyone, close your eyes.' }] },
-  { id: 'redOpen', screen: 'word', lines: [{ type: 'say', text: 'Red cards, open your eyes and look at my screen.' }] },
-  { id: 'redClose', lines: [{ type: 'say', text: 'Red cards, close your eyes.' }] },
-  { id: 'blackOpen', screen: 'pick', lines: [{ type: 'say', text: 'Black cards, open your eyes. Look only at my screen, not around the table.' }] },
-  { id: 'blackNod', lines: [{ type: 'gesture', text: "Give them a nod: you've seen them." }] },
-  { id: 'blackClose', lines: [{ type: 'say', text: 'Black cards, close your eyes.' }] },
-  { id: 'open', lines: [{ type: 'say', text: 'Everyone, open your eyes.' }] },
-];
-export const VOTE_CUE = 'On three, everyone point at who you think is a spy. One, two, three!';
-export const GESTURE_NOT_SPY = 'Shake your head / Thumbs down — not a spy';
-export const GESTURE_CAUGHT = 'Nod your head / Thumbs up — caught a spy!';
-export const GESTURE_RIGHT = 'Nod your head / Thumbs up — that is the word!';
-export const GESTURE_WRONG = 'Shake your head / Thumbs down — not the word';
 export const dirName = dir => (dir === 1 ? 'clockwise' : 'counter-clockwise');
-
 export const say = text => ({ type: 'say', text });
-export const gesture = text => ({ type: 'gesture', text });
 
 export function clueSeat(r, n, turn) {
   return (((r.start + r.dir * turn) % n) + n) % n;
 }
 
-// The lines the host reads / signals on the current screen, in order.
+// The lines the host reads out on the current screen, in order.
 export function cueFor(state) {
   const r = state.round;
   const nm = i => state.names[i];
   switch (state.phase) {
-    case 'night': return NIGHT[r.step].lines;
+    case 'pass': return [say(`Pass the phone to ${nm(r.pass)}.`)];
+    case 'grid': return [say('The secret word is one of these 16 words.')];
     case 'clues': {
       const seat = clueSeat(r, state.names.length, r.turn);
       return [say(`${nm(seat)}, your clue.`)];
     }
-    case 'vote': return [say(VOTE_CUE)];
+    case 'vote': return [say('On three, everyone point at who you think is the Odd Card. One, two, three.')];
     case 'reveal':
-      if (r.accused === null) return [say('Tie. No one is accused. Every spy escapes.')];
-      if (r.spies.includes(r.accused)) return [say(`${nm(r.accused)}, flip your card.`), gesture(GESTURE_CAUGHT)];
-      return [say(`${nm(r.accused)}, flip your card.`), gesture(GESTURE_NOT_SPY)];
-    case 'guess': return [say(`${nm(r.accused)}, you get one guess. What is the secret word?`)];
+      if (r.accused === null) return [say('Tie. No one is accused. Every Odd Card escapes.')];
+      return [say(r.spies.includes(r.accused) ? `${nm(r.accused)} is an Odd Card.` : `${nm(r.accused)} is not an Odd Card.`)];
+    case 'guess':
+      return [say(r.mode === 'grid' ? `${nm(r.accused)}, tap the secret word on the grid. You get one guess.` : `${nm(r.accused)}, you get one guess. What is the secret word?`)];
     case 'flip': {
       const out = [];
-      if (r.guessRight === true) out.push(gesture(GESTURE_RIGHT));
-      if (r.guessRight === false) out.push(gesture(GESTURE_WRONG));
-      out.push(say('Everyone, flip your cards face up so the table sees the spies.'));
+      if (r.guessRight === true) out.push(say('The guess was right.'));
+      if (r.guessRight === false) out.push(say('The guess was wrong.'));
       return out;
     }
     default: return [];
@@ -125,10 +93,10 @@ export function scoreRound(n, spies, accused, guessRight) {
 }
 
 export const OUTCOME_TEXT = {
-  escape: 'Tie vote: every spy escaped.',
-  agentAccused: 'An agent was accused: the spies win the round.',
-  spyRight: 'The accused spy guessed the word.',
-  spyWrong: 'The accused spy guessed wrong: the agents win the round.',
+  escape: 'Tie vote: every Odd Card escaped.',
+  agentAccused: 'A Word Holder was accused: the Odd Cards win the round.',
+  spyRight: 'The accused Odd Card guessed the word.',
+  spyWrong: 'The accused Odd Card guessed wrong: the Word Holders win the round.',
 };
 
 // 'none' | 'win' (one leader) | 'tie' (several leaders on the top score at/over target)
@@ -145,7 +113,9 @@ export function validateSettings(s) {
   if (names.length < MIN_PLAYERS || names.length > MAX_PLAYERS) throw new Error(`Players must be ${MIN_PLAYERS}-${MAX_PLAYERS}`);
   const target = s.target ?? DEFAULT_TARGET;
   if (!Number.isInteger(target) || target < MIN_TARGET || target > MAX_TARGET) throw new Error(`Target must be ${MIN_TARGET}-${MAX_TARGET}`);
-  return { names: names.map((x, i) => x || `Seat ${i + 1}`), target };
+  const mode = s.mode ?? 'classic';
+  if (!MODES.includes(mode)) throw new Error('Mode must be classic or grid');
+  return { names: names.map((x, i) => x || `Seat ${i + 1}`), target, mode };
 }
 
 function startRound(st) {
@@ -157,19 +127,22 @@ function startRound(st) {
   st.used.push(w.word);
   st.roundNo += 1;
   st.phase = 'deal';
+  const spies = shuffle(Array.from({ length: n }, (_, i) => i), rnd).slice(0, spyCount(n)).sort((a, b) => a - b);
+  const grid = st.mode === 'grid'
+    ? shuffle([w.word, ...shuffle(WORDS[w.category].filter(x => x !== w.word), rnd).slice(0, GRID_SIZE - 1)], rnd)
+    : null;
   st.round = {
-    no: st.roundNo, word: w.word, category: w.category, spyCount: spyCount(n),
-    cards: setupCards(n, rnd), step: 0, opened: [], spies: [],
+    no: st.roundNo, word: w.word, category: w.category, mode: st.mode, grid, spyCount: spies.length, spies, pass: 0,
     start: Math.floor(rnd() * n), dir: rnd() < 0.5 ? 1 : -1, turn: 0,
-    accused: undefined, guessRight: undefined, outcome: null, delta: null,
+    accused: undefined, guess: null, guessRight: undefined, outcome: null, delta: null,
   };
   return st;
 }
 
 export function createGame(settings) {
-  const { names, target } = validateSettings(settings);
+  const { names, target, mode } = validateSettings(settings);
   const st = {
-    names, target, scores: names.map(() => 0), roundNo: 0, history: [], used: [], tiebreak: null,
+    names, target, mode, scores: names.map(() => 0), roundNo: 0, history: [], used: [], tiebreak: null,
     win: { status: 'none', leaders: [] }, phase: 'deal', round: null, undo: [],
     rng: (settings.seed ?? (Date.now() ^ (Math.random() * 2 ** 32))) >>> 0,
   };
@@ -183,7 +156,7 @@ function finalize(st) {
   r.delta = delta;
   st.scores = st.scores.map((s, i) => s + delta[i]);
   st.history.push({
-    no: r.no, word: r.word, category: r.category, spies: r.spies.map(i => st.names[i]),
+    no: r.no, word: r.word, category: r.category, mode: r.mode, spies: r.spies.map(i => st.names[i]),
     accused: r.accused === null ? null : st.names[r.accused], outcome, delta, scores: st.scores.slice(),
     tiebreak: st.tiebreak ? st.tiebreak.map(i => st.names[i]) : null,
   });
@@ -197,12 +170,13 @@ function reduce(st, a) {
   switch (a.type) {
     case 'NEXT':
       switch (st.phase) {
-        case 'deal': st.phase = 'night'; r.step = 0; return st;
-        case 'night':
-          if (NIGHT[r.step].screen === 'pick' && r.opened.length !== r.spyCount) return null;
-          if (r.step === NIGHT.length - 1) { st.phase = 'clues'; r.turn = 0; r.spies = r.opened.slice(); return st; }
-          r.step += 1;
+        case 'deal': st.phase = 'pass'; r.pass = 0; return st;
+        case 'pass':
+          if (r.pass < n - 1) { r.pass += 1; return st; }
+          st.phase = r.mode === 'grid' ? 'grid' : 'clues';
+          r.turn = 0;
           return st;
+        case 'grid': st.phase = 'clues'; r.turn = 0; return st;
         case 'clues':
           if (r.turn === 2 * n - 1) { st.phase = 'vote'; return st; }
           r.turn += 1;
@@ -218,15 +192,6 @@ function reduce(st, a) {
           return startRound(st);
         default: return null;
       }
-    case 'TOGGLE_OPENED': {
-      if (st.phase !== 'night' || NIGHT[r.step].screen !== 'pick') return null;
-      const i = a.seat;
-      if (!Number.isInteger(i) || i < 0 || i >= n) return null;
-      if (r.opened.includes(i)) r.opened = r.opened.filter(x => x !== i);
-      else if (r.opened.length < r.spyCount) r.opened.push(i);
-      else return null;
-      return st;
-    }
     case 'VOTE': {
       if (st.phase !== 'vote') return null;
       if (a.seat === null) r.accused = null;
@@ -237,7 +202,11 @@ function reduce(st, a) {
     }
     case 'GUESS':
       if (st.phase !== 'guess') return null;
-      r.guessRight = !!a.right;
+      if (r.mode === 'grid') {
+        if (!r.grid.includes(a.word)) return null;
+        r.guess = a.word;
+        r.guessRight = a.word === r.word;
+      } else r.guessRight = !!a.right;
       finalize(st);
       return st;
     default: return null;
@@ -259,6 +228,5 @@ export function apply(state, action) {
 }
 
 export const canUndo = state => state.undo.length > 0;
-export const nightPickReady = state => state.round.opened.length === state.round.spyCount;
 export const isSpy = (state, seat) => state.round.spies.includes(seat);
 export const roleOf = (state, seat) => (state.round.spies.includes(seat) ? 'spy' : 'agent');

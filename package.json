@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "The Odd Card: a quick spy/impostor party game for a regular 52-card deck, with a phone as the storyteller.",
+  "description": "The Odd Card: a word game for 4–12 players. Pass one phone around, give clues, find the Odd Card.",
   "scripts": { "test": "node --test test/*.test.js" }
 }

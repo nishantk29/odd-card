@@ -74,21 +74,6 @@ button:focus-visible,input:focus-visible{outline:4px solid var(--ivory);outline-
 .next.red{background:var(--red-deep);color:var(--ivory)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-/* playing-card chips */
-.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
-.chip{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:62px;height:88px;border-radius:8px;background:var(--ivory);border:3px solid currentColor;line-height:1}
-.chip b{font-size:28px;font-weight:900;letter-spacing:-.04em}
-.chip i{font-style:normal;font-size:30px;font-family:system-ui,"Segoe UI Symbol","Apple Symbols",sans-serif;margin-top:2px}
-.chip.red{color:var(--red)}
-.chip.black{color:var(--spy)}
-.chip.big{width:84px;height:118px}
-.group-label{margin-top:var(--s5);font-weight:800;font-size:16px;display:flex;gap:8px;align-items:center}
-.dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:2px solid var(--ivory)}
-.dot.red{background:var(--red)}.dot.black{background:var(--spy)}
-.legend{display:grid;gap:var(--s3);margin-top:var(--s6)}
-.legend h3{font-size:18px;font-weight:900}
-.legend .r{display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;padding:10px;border-radius:12px;background:rgba(0,0,0,.24);font-size:16px;line-height:1.35;font-weight:500}
-.legend .r svg{width:44px;height:44px}
 
 /* word, picker, players */
 .wordcard{display:block;width:100%;margin-top:16px;padding:var(--s5) var(--s4);border-radius:12px;background:var(--ivory);color:var(--ink);text-align:left;transition:transform .35s var(--ease-pop)}
@@ -96,9 +81,8 @@ button:focus-visible,input:focus-visible{outline:4px solid var(--ivory);outline-
 .wordcard small{display:block;font-weight:700;font-size:16px;color:#4d4d57}
 .wordcard strong{display:block;font-size:clamp(44px,14vw,76px);font-weight:900;letter-spacing:-.03em;line-height:1.02;margin:var(--s2) 0 var(--s3);overflow-wrap:anywhere;color:var(--felt-dk)}
 .wordcard em{font-style:normal;font-weight:700;font-size:15px;color:#4d4d57}
-.wordcard.hid strong{color:transparent;text-shadow:0 0 22px rgba(0,0,0,.55)}
 .players{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.pbtn{min-width:0;min-height:60px;padding:10px 14px;border-radius:14px;background:rgba(0,0,0,.28);font-weight:800;font-size:18px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+.pbtn{min-width:0;min-height:60px;padding:10px 14px;border-radius:14px;background:rgba(0,0,0,.28);font-weight:800;font-size:18px;text-align:left;overflow-wrap:anywhere;hyphens:auto;
   transition:transform .35s var(--ease-pop)}
 .pbtn:active{transform:scale(.95)}
 .pbtn.on{background:var(--ivory);color:var(--ink);box-shadow:0 0 0 4px var(--gold)}
@@ -152,7 +136,9 @@ button:focus-visible,input:focus-visible{outline:4px solid var(--ivory);outline-
 .qa{margin-top:var(--s2);border-radius:12px;background:rgba(0,0,0,.28);overflow:hidden}
 .qa summary{list-style:none;cursor:pointer;padding:14px 16px;font-weight:800;font-size:18px;line-height:1.3}
 .qa summary::-webkit-details-marker{display:none}
-.qa p{padding:0 16px 16px;font-size:17px;line-height:1.5;font-weight:500}
+.qa .ans{padding:0 16px 16px;font-size:17px;line-height:1.5;font-weight:500;display:grid;gap:10px}
+.qa ol,.qa ul{margin:0;padding-left:22px;display:grid;gap:6px}
+.qa li::marker{font-weight:800;color:var(--gold)}
 mark{background:var(--gold);color:var(--ink);border-radius:4px;padding:0 2px}
 .nomatch{margin-top:24px;font-weight:800;font-size:20px}
 
@@ -187,7 +173,7 @@ mark{background:var(--gold);color:var(--ink);border-radius:4px;padding:0 2px}
 .reason{font-size:19px;font-weight:600;line-height:1.35}
 .reveal{display:grid;gap:8px;margin-top:6px}
 .rv{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,.3);font-weight:800;font-size:17px}
-.rv .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rv .nm{min-width:0;overflow-wrap:anywhere}
 .tag{padding:3px 10px;border-radius:99px;font-size:13px;font-weight:800}
 .tag.red{background:var(--red-deep);color:var(--ivory)}
 .tag.black{background:var(--spy);color:var(--gold);box-shadow:0 0 0 2px #3a3a44}
@@ -199,11 +185,45 @@ mark{background:var(--gold);color:var(--ink);border-radius:4px;padding:0 2px}
 
 /* flat: reduced motion, low-end, host toggle */
 html.flat *,html.flat *::before,html.flat *::after{animation:none!important;transition:none!important}
-html.flat .tile,html.flat .chip,html.flat .wordcard,html.flat .stage{transform:none!important}
+html.flat .tile,html.flat .wordcard,html.flat .stage{transform:none!important}
 html.flat .confetti{display:none}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
-  .tile,.chip,.wordcard,.stage{transform:none!important}
+  .tile,.wordcard,.stage{transform:none!important}
   .confetti{display:none}
 }
-@media (max-width:360px){.next{font-size:28px}.chip{width:54px;height:78px}}
+@media (max-width:360px){.next{font-size:28px}}
+
+/* link card, steps, mode picker */
+.rulescard{display:grid;grid-template-columns:1fr 52px;gap:var(--s4);align-items:center;width:100%;text-align:left;margin-top:var(--s2);padding:var(--s4) var(--s5);border-radius:20px;background:var(--felt);color:var(--ivory)}
+.rulescard .rc-t b{display:block;font-size:24px;font-weight:900;letter-spacing:-.02em;line-height:1.1}
+.rulescard .rc-t small{display:block;margin-top:4px;font-size:16px;font-weight:500;line-height:1.35;color:var(--dim)}
+.rulescard svg{width:52px;height:52px}
+.steps{margin:var(--s4) 0 0;padding-left:24px;display:grid;gap:var(--s2);font-size:17px;line-height:1.45;font-weight:500}
+.seg{display:grid;gap:10px;margin-top:12px}
+.segb{display:grid;gap:2px;text-align:left;padding:14px 16px;border-radius:14px;background:rgba(0,0,0,.3);box-shadow:inset 0 0 0 2px transparent}
+.segb b{font-size:20px;font-weight:900}
+.segb small{font-size:15px;font-weight:500;opacity:.85;line-height:1.35}
+.segb.on{background:var(--ivory);color:var(--ink);box-shadow:0 0 0 4px var(--gold)}
+
+/* pass the phone: one card layout for every player */
+.passto{margin-top:14px;font-weight:700;font-size:18px;opacity:.85}
+.passto + .big{margin-top:2px}
+.holdcard{display:block;position:relative;width:100%;height:260px;margin-top:var(--s4);perspective:900px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer;border-radius:16px}
+.hc{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .28s ease}
+.holdcard.shown .hc{transform:rotateY(180deg)}
+.hc-back,.hc-front{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:var(--s4);overflow:hidden}
+.hc-back{background:repeating-linear-gradient(45deg,#17171c 0 12px,#1f1f26 12px 24px);box-shadow:inset 0 0 0 4px var(--gold);color:var(--gold);font-weight:900;font-size:24px}
+.hc-front{transform:rotateY(180deg);background:var(--ivory);color:var(--ink);gap:var(--s2)}
+.hc-front small{font-weight:700;font-size:16px;color:#4d4d57}
+.hc-front strong{display:flex;align-items:center;justify-content:center;width:100%;min-height:2.2em;font-size:clamp(30px,9.5vw,44px);font-weight:900;letter-spacing:-.03em;line-height:1.05;overflow-wrap:anywhere;color:var(--felt-dk)}
+.hc-front em{font-style:normal;font-weight:700;font-size:15px;color:#4d4d57}
+
+/* 16-word grid */
+.wgrid{list-style:none;padding:0;margin:var(--s4) 0 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.gw{display:flex;align-items:center;justify-content:center;width:100%;min-height:58px;padding:4px;border-radius:10px;background:var(--ivory);color:var(--ink);font-weight:800;font-size:clamp(11px,3.3vw,15px);line-height:1.1;text-align:center;overflow-wrap:anywhere;hyphens:auto}
+button.gw:active{background:var(--gold)}
+.gridbox{margin-top:var(--s4);border-radius:12px;background:rgba(0,0,0,.14);padding:0 var(--s3) var(--s3)}
+.gridbox summary{cursor:pointer;list-style:none;padding:var(--s3) 0;font-weight:800;font-size:17px}
+.gridbox summary::-webkit-details-marker{display:none}
+.gridbox .wgrid{margin-top:0}
