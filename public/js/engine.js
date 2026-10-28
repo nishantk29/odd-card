@@ -6,7 +6,7 @@ export const MAX_PLAYERS = 12;
 export const MIN_TARGET = 4;
 export const MAX_TARGET = 10;
 export const DEFAULT_TARGET = 6;
-const MAX_UNDO = 120;
+export const MAX_UNDO = 120;
 
 export const spyCount = n => (n >= 8 ? 2 : 1);
 
