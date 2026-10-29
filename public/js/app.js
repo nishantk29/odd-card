@@ -64,11 +64,11 @@ const gridBox = g => (g.round.mode === 'grid' ? `<details class="gridbox" data-g
 function homeHTML() {
   const g = G();
   const lastRoom = P.lastRoom();
-  const rejoin = lastRoom ? `<button class="tile t-spy" data-act="rejoin"><h2>Rejoin room</h2><p>Room ${esc(lastRoom)}</p>${icons.go()}</button>` : '';
+  const rejoin = lastRoom ? `<button class="tile t-spy" data-act="rejoin"><h2>Rejoin</h2><p>Room ${esc(lastRoom)}</p>${icons.go()}</button>` : '';
   const resume = g && g.phase !== 'over' ? `<button class="tile t-spy" data-act="resume"><h2>Resume game</h2><p>Round ${g.round.no}, ${g.names.length} players</p>${icons.go()}</button>` : '';
   return `<main class="wrap home"><header>${titleArt()}<h1>The Odd Card</h1><p class="sub">A word game with one player out of the loop.</p></header>
   <div class="stack">
-    <button class="tile t-gold" data-act="play"><h2>New game</h2><p>Own phones, one phone passed around, or both</p>${icons.go()}</button>
+    <button class="tile t-gold" data-act="play"><h2>Host a game</h2><p>Own phones, one phone passed around, or both</p>${icons.go()}</button>
     <button class="tile t-teal" data-act="phones"><h2>Join a game</h2><p>Type a room code or scan the QR</p>${icons.go()}</button>${rejoin}${resume}
     <button class="rulescard" data-act="faq"><span class="rc-t"><b>Rules &amp; FAQ</b><small>Setup, modes, Phones mode and scoring.</small></span>${oddIcon()}</button>
     <section class="how"><h2>How to play</h2><ol aria-label="How to play, 4 steps">
@@ -154,14 +154,14 @@ function gameHTML() {
   const body = { deal: dealBody, pass: passBody, grid: gridBody, clues: cluesBody, vote: voteBody, reveal: revealBody, guess: guessBody, flip: flipBody, score: scoreBody, over: scoreBody }[p](g);
   let dock = '';
   const next = (label, cls = '', dis = false) => `<button class="next ${cls}" data-act="next" ${dis ? 'disabled' : ''}>${label}</button>`;
-  if (p === 'deal') dock = next('Start Passing');
-  else if (p === 'pass') dock = next(r.pass === g.names.length - 1 ? (r.mode === 'grid' ? 'Done, Show Grid' : 'Done, Start clues') : 'Done, Pass On', '', !T.revealed);
+  if (p === 'deal') dock = next('Start passing');
+  else if (p === 'pass') dock = next(r.pass === g.names.length - 1 ? (r.mode === 'grid' ? 'Next: Word grid' : 'Start clues') : `Next: ${esc(g.names[r.pass + 1])}`, '', !T.revealed);
   else if (p === 'grid') dock = next('Start clues');
-  else if (p === 'clues') dock = next(r.turn === 2 * g.names.length - 1 ? 'Go to vote' : 'Next player');
-  else if (p === 'reveal') dock = next(r.accused !== null && r.spies.includes(r.accused) ? 'Odd Card Guesses' : 'Next');
+  else if (p === 'clues') dock = next(r.turn === 2 * g.names.length - 1 ? 'Go to vote' : `Next: ${esc(g.names[E.clueSeat(r, g.names.length, r.turn + 1)])}`);
+  else if (p === 'reveal') dock = next(r.accused !== null && r.spies.includes(r.accused) ? 'Next: Odd Card guess' : 'Next');
   else if (p === 'guess' && r.mode === 'classic') dock = `<div class="row2"><button class="next teal" data-act="guess" data-right="1">Right</button><button class="next red" data-act="guess" data-right="0">Wrong</button></div>`;
-  else if (p === 'flip') dock = next('Show Scores');
-  else if (p === 'score') dock = next(g.win.status === 'win' ? 'See the Winner' : g.win.status === 'tie' ? 'Tiebreak Round' : 'Next round');
+  else if (p === 'flip') dock = next('Show scores');
+  else if (p === 'score') dock = next(g.win.status === 'win' ? 'Show the winner' : g.win.status === 'tie' ? 'Next: Tiebreak round' : `Next: Round ${r.no + 1}`);
   return `<main class="wrap"><div class="bar"><span class="pill gold">Round ${r.no}</span><span class="pill">First to ${g.target}</span><span class="grow"></span>
     <button class="iconbtn" data-act="menu" aria-label="Host menu">${icons.menu()}</button></div><div class="screen">${body}</div>${dock ? `<div class="dock">${dock}</div>` : ''}</main>`;
 }
@@ -169,20 +169,20 @@ function gameHTML() {
 // ---- sheets ------------------------------------------------------------
 function menuSheet() {
   const g = G();
-  const conf = T.confirm ? `<div class="confirm"><p>Start a new game? The current game and its scores will be lost.</p><div class="row2"><button class="mbtn danger" data-act="newYes">Yes, new game</button><button class="mbtn" data-act="newNo">Cancel</button></div></div>` : '';
+  const conf = T.confirm ? `<div class="confirm"><p>Start a new game? The current game and its scores will be lost.</p><div class="row2"><button class="mbtn danger" data-act="newYes">Restart game</button><button class="mbtn" data-act="newNo">Keep playing</button></div></div>` : '';
   return `<h2>Host Menu</h2><div class="menu">
-    <button class="mbtn" data-act="undo" ${g && E.canUndo(g) ? '' : 'disabled'}>Undo last step</button>
+    <button class="mbtn" data-act="undo" ${g && E.canUndo(g) ? '' : 'disabled'}>Undo</button>
     <button class="mbtn" data-act="history">Round history</button>
     <button class="mbtn" data-act="faq">Rules &amp; FAQ</button>
     <button class="mbtn" data-act="settings">Settings</button>
-    <button class="mbtn" data-act="home">Home</button>
-    <button class="mbtn danger" data-act="newGame">New game</button></div>${conf}
+    <button class="mbtn" data-act="home">The Odd Card home</button>
+    <button class="mbtn danger" data-act="newGame">Restart game</button></div>${conf}
     <button class="mbtn" style="margin-top:14px;justify-content:center" data-act="close">Close</button>`;
 }
 
 function settingsSheet() {
   const sw = (act, label, on) => `<button class="mbtn" data-act="${act}" role="switch" aria-checked="${on}">${label}<span class="switch${on ? ' on' : ''}"></span></button>`;
-  return `<h2>Settings</h2><div class="menu">${sw('anim', 'Animations', S.anim)}${sw('haptics', 'Vibration', S.haptics)}${sw('wake', 'Keep Screen On', S.wake)}</div>
+  return `<h2>Settings</h2><div class="menu">${sw('anim', 'Animations', S.anim)}${sw('haptics', 'Vibration', S.haptics)}${sw('wake', 'Keep screen on', S.wake)}</div>
     <p class="note">Animations also follow your phone’s reduced-motion setting. Vibration and Keep Screen On only work where your browser supports them.</p>
     <button class="mbtn" style="margin-top:14px;justify-content:center" data-act="close">Close</button>`;
 }
@@ -221,7 +221,7 @@ function winPopup() {
     <p class="reason">${esc(g.names[leaders[0]])} reached ${pts} points (target ${g.target}). ${E.OUTCOME_TEXT[r.outcome]} The word was <b>${esc(r.word)}</b>.</p>
     <div class="reveal">${reveal}</div>
     <button class="next" data-act="again" style="margin-top:8px">Play again</button>
-    <button class="mbtn" data-act="winhome" style="justify-content:center">Home</button></div></div>`;
+    <button class="mbtn" data-act="winhome" style="justify-content:center">The Odd Card home</button></div></div>`;
 }
 
 function sheetsHTML() {
