@@ -2,8 +2,9 @@
 import * as E from './engine.js';
 import { esc, titleArt, oddIcon, icons } from './art.js';
 import { faqResults } from './faq.js';
-import { holdCard, holdEnd, initHold } from './holdcard.js';
+import { holdCard, holdEnd, initHold, ODD_TEXT } from './holdcard.js';
 import * as P from './phones.js';
+import * as Su from './setup.js';
 
 const KEY = 'oddcard.v2';
 const OLD_KEY = 'oddcard.v1'; // earlier format (eyes-open night, physical deck): only the setup is carried over
@@ -67,8 +68,8 @@ function homeHTML() {
   const resume = g && g.phase !== 'over' ? `<button class="tile t-spy" data-act="resume"><h2>Resume Game</h2><p>Round ${g.round.no} · ${g.names.length} players</p>${icons.go()}</button>` : '';
   return `<main class="wrap home"><header>${titleArt()}<h1>The Odd Card</h1><p class="sub">A word game with one player out of the loop.</p></header>
   <div class="stack">
-    <button class="tile t-gold" data-act="play"><h2>Pass the Phone</h2><p>One phone, passed around the table</p>${icons.go()}</button>
-    <button class="tile t-teal" data-act="phones"><h2>Phones</h2><p>Everyone plays on their own phone</p>${icons.go()}</button>${rejoin}${resume}
+    <button class="tile t-gold" data-act="play"><h2>New Game</h2><p>Own phones, one phone passed around, or both</p>${icons.go()}</button>
+    <button class="tile t-teal" data-act="phones"><h2>Join a Game</h2><p>Type a room code or scan the QR</p>${icons.go()}</button>${rejoin}${resume}
     <button class="rulescard" data-act="faq"><span class="rc-t"><b>Rules &amp; FAQ</b><small>Setup, modes, Phones mode and scoring.</small></span>${oddIcon()}</button>
     <section class="how"><h2>How to Play</h2><ol aria-label="How to Play, 4 steps">
       <li><b>Deal.</b> Each player secretly looks at their card, on one passed phone or on their own.</li>
@@ -77,20 +78,6 @@ function homeHTML() {
       <li><b>Score.</b> Odd Cards score by hiding, Word Holders by catching. First to the target wins.</li></ol></section>
     <button class="faqlink" data-act="settings"><span><b>Settings</b> Animations, vibration, screen</span>${icons.go()}</button>
   </div></main>`;
-}
-
-function setupHTML() {
-  const { names, target, mode } = S.setup;
-  const n = names.length, k = E.spyCount(n);
-  const seg = (m, t, d) => `<button class="segb${mode === m ? ' on' : ''}" data-act="mode" data-mode="${m}" role="radio" aria-checked="${mode === m}"><b>${t}</b><small>${d}</small></button>`;
-  return `<main class="wrap"><div class="bar"><button class="iconbtn" data-act="home" aria-label="Home">${icons.back()}</button><span class="grow"></span><button class="iconbtn" data-act="faq" aria-label="Rules and FAQ">?</button></div>
-  <div class="screen">${stage('felt', `<span class="eyebrow">Setup</span><h1 class="mid">Players, in seat order</h1>
-    <p class="note">${n} players · ${k} Odd ${plural(k, 'Card', 'Cards')} per round. Everyone plays.</p>
-    <div class="names">${names.map((v, i) => `<div class="nrow"><span class="n">${i + 1}</span><input data-name="${i}" value="${esc(v)}" maxlength="20" aria-label="Seat ${i + 1} name" autocomplete="off"><button class="x" data-act="remove" data-seat="${i}" aria-label="Remove seat ${i + 1}" ${n <= E.MIN_PLAYERS ? 'disabled' : ''}>${icons.close()}</button></div>`).join('')}</div>
-    <button class="addbtn" data-act="add" ${n >= E.MAX_PLAYERS ? 'disabled' : ''}>+ Add Player</button>
-    <h2 class="mid">Mode</h2><div class="seg" role="radiogroup" aria-label="Mode">${seg('classic', 'Classic', 'One secret word. The Odd Card sees only the category.')}${seg('grid', 'Grid', '16 words on a public grid. The secret word is one of them.')}</div>
-    <h2 class="mid">Play to</h2><div class="stepper"><button data-act="tminus" aria-label="Lower target" ${target <= E.MIN_TARGET ? 'disabled' : ''}>−</button><output>${target}</output><button data-act="tplus" aria-label="Raise target" ${target >= E.MAX_TARGET ? 'disabled' : ''}>+</button><span class="pill">points</span></div>`)}</div>
-  <div class="dock"><button class="next" data-act="start">Start Game</button></div></main>`;
 }
 
 function dealBody(g) {
@@ -106,9 +93,8 @@ function dealBody(g) {
 
 function passBody(g) {
   const r = g.round;
-  return stage('spy', `<span class="eyebrow">Pass the phone · ${r.pass + 1} of ${g.names.length}</span><div class="passto">Pass to</div><div class="big">${nameOf(r.pass)}</div>
-    ${holdCard(`Category: ${r.category}`, r.spies.includes(r.pass) ? 'You’re the Odd Card' : r.word, 'Your card. Press and hold to reveal.')}
-    <p class="note">Only the player named above looks. Press and hold the card, then let go to hide it.</p>`);
+  return `<div class="cardslot"><p class="cardfor">Pass the phone to <b>${nameOf(r.pass)}</b> · ${r.pass + 1} of ${g.names.length}</p>${holdCard('pass')}</div>`
+    + stage('spy', `<p class="note">Only ${nameOf(r.pass)} looks. Press and hold the card, then let go to hide it.</p>`);
 }
 
 function gridBody(g) {
@@ -140,7 +126,7 @@ function revealBody(g) {
 function guessBody(g) {
   const r = g.round;
   const check = r.mode === 'grid' ? `${wordGrid(g, true)}<p class="note">One tap. The app checks it.</p>`
-    : `<p class="note"><b>Host:</b> did they say the word? Anyone except ${nameOf(r.accused)} can press and hold to check it.</p>${holdCard(`Category: ${r.category}`, r.word, 'Secret word. Press and hold to check.')}`;
+    : `<p class="note"><b>Host:</b> did they say the word? Anyone except ${nameOf(r.accused)} can press and hold to check it.</p>${holdCard('word', 'Secret word. Press and hold to check.')}`;
   return stage('spy', `<span class="eyebrow">Guess</span><div class="big">${nameOf(r.accused)}</div>${lines(E.cueFor(g))}${check}`);
 }
 
@@ -240,6 +226,7 @@ function winPopup() {
 
 function sheetsHTML() {
   const g = G();
+  if (S.view === 'setup' && !P.active() && !T.sheet) return Su.sheetHTML();
   if (P.active() && !T.sheet) return P.overHTML(isFlat());
   if (S.view === 'game' && g && g.phase === 'over' && T.sheet !== 'faq') return winPopup();
   if (!T.sheet) return '';
@@ -254,9 +241,13 @@ function render() {
   document.documentElement.classList.toggle('flat', isFlat());
   const active = P.active();
   const kept = keepFocus();
-  $app.innerHTML = active ? P.html() : S.view === 'setup' ? setupHTML() : S.view === 'game' && G() ? gameHTML() : homeHTML();
+  const inSetup = !active && S.view === 'setup';
+  document.body.classList.toggle('v2', inSetup);
+  if (inSetup) Su.captureFocus();
+  $app.innerHTML = active ? P.html() : inSetup ? Su.html() : S.view === 'game' && G() ? gameHTML() : homeHTML();
   $sheets.innerHTML = sheetsHTML();
   restoreFocus(kept);
+  if (inSetup) Su.afterRender();
   document.body.classList.toggle('open', !!$sheets.firstChild);
   if (S.view === 'game' && G() && ['score', 'over'].includes(G().phase)) animateScore();
   wake();
@@ -298,26 +289,20 @@ function animateScore() {
 }
 
 // ---- events ------------------------------------------------------------
-const startGame = () => {
-  const names = S.setup.names.map((n, i) => n.trim() || `Seat ${i + 1}`);
-  S.game = E.createGame({ names, target: S.setup.target, mode: S.setup.mode });
+const startGame = (names, { mode, target }) => {
+  S.game = E.createGame({ names, target, mode });
   S.view = 'game';
   T.sheet = null; T.revealed = false; T.animKey = ''; T.gridOpen = false;
 };
 
 const actions = {
-  play() { S.view = 'setup'; },
+  play() { S.view = 'setup'; Su.enter(); },
   phones() { P.open(); },
   rejoin() { P.open(P.lastRoom()); },
   pmenu() { T.sheet = 'pmenu'; P.resetMenu(); },
   resume() { S.view = 'game'; },
-  home() { S.view = 'home'; T.sheet = null; T.confirm = false; },
+  home() { S.view = 'home'; T.sheet = null; T.confirm = false; Su.leaveView(); },
   faq() { T.sheet = 'faq'; },
-  add() { if (S.setup.names.length < E.MAX_PLAYERS) { let k = S.setup.names.length + 1; while (S.setup.names.includes(`Seat ${k}`)) k++; S.setup.names.push(`Seat ${k}`); } },
-  remove(el) { if (S.setup.names.length > E.MIN_PLAYERS) S.setup.names.splice(+el.dataset.seat, 1); },
-  tminus() { S.setup.target = Math.max(E.MIN_TARGET, S.setup.target - 1); },
-  tplus() { S.setup.target = Math.min(E.MAX_TARGET, S.setup.target + 1); },
-  start: startGame,
   menu() { T.sheet = 'menu'; T.confirm = false; },
   close() { T.sheet = null; T.confirm = false; },
   back() { T.sheet = 'menu'; },
@@ -326,13 +311,12 @@ const actions = {
   haptics() { S.haptics = !S.haptics; },
   wake() { S.wake = !S.wake; },
   settings() { T.sheet = 'settings'; },
-  mode(el) { S.setup.mode = el.dataset.mode; },
   undo() { T.sheet = null; dispatch({ type: 'UNDO' }); return 'done'; },
   newGame() { T.confirm = true; },
   newNo() { T.confirm = false; },
-  newYes() { S.game = null; S.view = 'setup'; T.sheet = null; T.confirm = false; },
-  again() { S.setup.names = G().names.slice(); S.setup.target = G().target; S.setup.mode = G().mode; startGame(); },
-  winhome() { S.setup.names = G().names.slice(); S.setup.target = G().target; S.setup.mode = G().mode; S.game = null; S.view = 'home'; },
+  newYes() { S.game = null; S.view = 'setup'; T.sheet = null; T.confirm = false; Su.enter(); },
+  again() { startGame(G().names, { mode: G().mode, target: G().target }); },
+  winhome() { S.game = null; S.view = 'home'; },
   clearq() { T.q = ''; const i = document.getElementById('faqq'); i.value = ''; document.getElementById('faqres').innerHTML = faqResults(''); i.focus(); document.querySelector('.search .clear').hidden = true; return 'done'; },
   next() { dispatch({ type: 'NEXT' }); return 'done'; },
   gridguess(el) { dispatch({ type: 'GUESS', word: el.dataset.word }); return 'done'; },
@@ -347,19 +331,26 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('input', e => {
   const t = e.target;
-  if (t.matches('[data-name]')) { S.setup.names[+t.dataset.name] = t.value; save(); }
-  else if (t.id === 'faqq') {
+  if (t.id === 'faqq') {
     T.q = t.value;
     document.getElementById('faqres').innerHTML = faqResults(T.q);
     document.querySelector('.search .clear').hidden = !T.q;
   }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && T.sheet) { T.sheet = null; T.confirm = false; render(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && T.sheet && !(S.view === 'setup')) { T.sheet = null; T.confirm = false; render(); } });
 
 // ---- press-and-hold card: shared with Phones mode (holdcard.js) ----------
+// The text is looked up here, in memory, only while a card is held; it is never in the page otherwise.
+function secretFor(key) {
+  const g = G();
+  if (key === 'pass' && g) { const r = g.round; return { small: `Category: ${r.category}`, title: r.spies.includes(r.pass) ? ODD_TEXT : r.word }; }
+  if (key === 'word' && g) return { small: `Category: ${g.round.category}`, title: g.round.word };
+  return P.secretFor(key);
+}
 initHold({
   haptics: () => S.haptics,
-  onReveal() { P.markRevealed(); if (!T.revealed) { T.revealed = true; const b = document.querySelector('.dock [data-act="next"]'); if (b) b.disabled = false; } },
+  secretFor,
+  onReveal(key) { P.markRevealed(key); if (key === 'pass' && !T.revealed) { T.revealed = true; const b = document.querySelector('.dock [data-act="next"]'); if (b) b.disabled = false; } },
 });
 document.addEventListener('toggle', e => { if (e.target.matches?.('[data-grid]')) T.gridOpen = e.target.open; }, true);
 
@@ -377,7 +368,9 @@ async function wake() {
 document.addEventListener('visibilitychange', () => { wake(); });
 
 mq.addEventListener?.('change', render);
-P.init({ render, haptics: () => S.haptics, closeSheet() { T.sheet = null; render(); } });
+Su.init({ render, legacy: S.setup, home: () => actions.home(), startLocal: (names, settings) => { startGame(names, settings); save(); render(); } });
+P.init({ render, haptics: () => S.haptics, closeSheet() { T.sheet = null; render(); }, hostLobby() { S.view = 'setup'; Su.hostLobby(); } });
 const room = new URLSearchParams(location.search).get('room');
 if (room && /^[A-Za-z]{6}$/.test(room)) P.open(room.toUpperCase()); // a join link goes straight to the join screen
+else if (S.view === 'setup') { Su.resumeIfAny(); render(); }
 else render();

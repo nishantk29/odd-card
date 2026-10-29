@@ -30,6 +30,12 @@ export const icons = {
   menu: () => mark('<path d="M4 7h16M4 12h16M4 17h16"/>'),
   close: () => mark('<path d="M6 6l12 12M18 6L6 18"/>'),
   go: () => mark('<path d="M9 5l7 7-7 7"/>'),
+  check: () => mark('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 2.8),
+  phone: () => mark('<path d="M7 3h10a1 1 0 011 1v16a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M11 18h2"/>', 2),
+  qr: () => mark('<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM19 14v0M14 20h6M20 17v3"/>', 2),
+  lock: () => mark('<path d="M7 11V8a5 5 0 0110 0v3"/><path d="M5 11h14v9H5z"/>', 2),
+  more: () => mark('<path d="M5 12h.01M12 12h.01M19 12h.01"/>', 3.4),
+  star: () => mark('<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8 6.8 19.6l1-5.8L3.5 9.7l5.9-.8z"/>', 2),
 };
 
 // Small Odd Card mark (SVG, 64x64) for link cards.

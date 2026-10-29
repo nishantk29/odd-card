@@ -3,7 +3,7 @@
 // shell, settings and sheets; while a room is open this module supplies #app's HTML and handles its own [data-pa] clicks.
 import * as E from './engine.js';
 import { esc, oddIcon, icons } from './art.js';
-import { holdCard, buzz } from './holdcard.js';
+import { holdCard, buzz, ODD_TEXT } from './holdcard.js';
 import { qrSvg, joinUrl } from './qr.js';
 import { MIN_PLAYERS } from './room.js';
 
@@ -19,9 +19,10 @@ const plural = (n, one, many) => (n === 1 ? one : many);
 let deps = { render() {}, haptics: () => true };
 let P = null; // the open room, or null
 let ws = null;
+let setupFail = ''; // why the setup carousel has no room (offline, server down), shown on step 1
 
 export const init = d => { deps = { ...deps, ...d }; };
-export const active = () => !!P;
+export const active = () => !!P && !P.setup; // while the setup carousel owns the screen, the room runs in the background
 export const lastRoom = () => { const c = store.get(K.last); return c && store.get(K.player(c)) ? c : null; };
 // Keep the screen on from the first deal to the winner screen (not in the lobby, not after the end).
 export const wantsWake = () => !!(P?.view?.game && !['lobby', 'over', 'ended'].includes(P.view.phase));
@@ -29,8 +30,9 @@ export const wantsWake = () => !!(P?.view?.game && !['lobby', 'over', 'ended'].i
 export const busy = () => !!document.querySelector('.holdcard.shown');
 
 // ---- opening, joining, leaving -------------------------------------------
+const fresh = (extra = {}) => ({ code: null, step: 'entry', view: null, conn: false, err: '', name: store.get(K.name) || '', codeInput: '', revealed: false, revealedLocal: false, confirmEnd: false, guess: '', menu: false, wait: false, prev: null, gone: false, sent: {}, ...extra });
 export function open(code = null) {
-  P = { code, step: code ? 'join' : 'entry', view: null, conn: false, err: '', name: store.get(K.name) || '', codeInput: '', revealed: false, confirmEnd: false, guess: '', menu: false, wait: false, prev: null, gone: false };
+  P = fresh({ code, step: code ? 'join' : 'entry' });
   if (code) {
     if (store.get(K.player(code))) { P.step = 'room'; connect(); } else checkRoom();
   }
@@ -60,20 +62,6 @@ export function exit() {
 }
 
 const flash = msg => { if (!P) return; P.err = msg; deps.render(); clearTimeout(flash.t); flash.t = setTimeout(() => { if (P && P.err === msg) { P.err = ''; deps.render(); } }, 5000); };
-
-async function hostRoom() {
-  const name = P.name.trim();
-  if (!name) return flash('Type your name first.');
-  P.wait = true; deps.render();
-  try {
-    const res = await fetch('/api/create', { method: 'POST' });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-    store.set(K.host(data.code), data.hostKey);
-    P.code = data.code; P.wait = false;
-    sendJoin();
-  } catch (e) { P.wait = false; flash(e?.message || 'Couldn’t create a room. Check your connection and try again.'); }
-}
 
 async function joinRoom() {
   const name = P.name.trim();
@@ -117,9 +105,9 @@ function connect() {
     let m; try { m = JSON.parse(ev.data); } catch { return; }
     if (!P) return;
     if (m.type === 'view') onView(m.view);
-    else if (m.type === 'joined') { store.set(K.player(code), JSON.stringify({ playerId: m.playerId, token: m.token })); store.set(K.last, code); P.step = 'room'; try { history.replaceState(null, '', `?room=${code}`); } catch { /* sandboxed */ } }
-    else if (m.type === 'error') flash(m.error);
-    else if (m.type === 'fatal') { if (m.clear) store.del(K.player(code)); closeSocket(); P.step = 'join'; P.view = null; P.conn = false; P.err = m.error; deps.render(); }
+    else if (m.type === 'joined') { store.set(K.player(code), JSON.stringify({ playerId: m.playerId, token: m.token })); store.set(K.last, code); P.step = 'room'; if (!P.setup) try { history.replaceState(null, '', `?room=${code}`); } catch { /* sandboxed */ } }
+    else if (m.type === 'error') { if (P.starting) { P.starting = false; P.setup = true; } if (!(P.setup && /already has that name/.test(m.error))) flash(m.error); }
+    else if (m.type === 'fatal') { if (P.setup) { if (m.clear) { store.del(K.player(code)); store.del(K.host(code)); } closeSocket(); P = null; setupFail = m.error; deps.render(); return; } if (m.clear) store.del(K.player(code)); closeSocket(); P.step = 'join'; P.view = null; P.conn = false; P.err = m.error; deps.render(); }
   };
   ws.onclose = () => { if (ws !== me || !P) return; P.conn = false; deps.render(); timer = setTimeout(connect, Math.min(8000, 400 * 2 ** tries++)); };
 }
@@ -129,6 +117,9 @@ function onView(v) {
   const old = P.prev; P.prev = v; P.view = v; P.step = 'room';
   const key = `${v.phase}:${v.game?.round}`;
   if (P.key !== key) { P.key = key; P.revealed = false; P.guess = ''; }
+  if (P.localKey !== v.localPass?.id) { P.localKey = v.localPass?.id; P.revealedLocal = false; }
+  if (v.phase !== 'lobby') { P.starting = false; if (P.setup) P.setup = false; } // the game is running: the room screens take over
+  if (!P.setup && !P.starting && v.phase === 'lobby' && v.me.host) { P.setup = true; deps.hostLobby?.(); } // the Host's lobby is the setup carousel
   // a nudge when it becomes my turn to do something
   const g = v.game, id = v.me.id;
   if (old && g) {
@@ -145,19 +136,24 @@ const stage = (cls, inner) => `<div class="stack3"><section class="stage ${cls}"
 const gridOf = (g, tap = false) => `<ul class="wgrid" aria-label="16 words">${g.grid.map(w => `<li>${tap ? `<button class="gw" data-pa="gridguess" data-word="${esc(w)}">${esc(w)}</button>` : `<span class="gw">${esc(w)}</span>`}</li>`).join('')}</ul>`;
 const gridBox = (g, open) => (g.grid ? `<details class="gridbox"${open ? ' open' : ''}><summary>Word grid</summary>${gridOf(g)}</details>` : '');
 // The same card for everyone: category on top, the word or "You’re the Odd Card" below.
-const myCard = v => holdCard(`Category: ${v.secret.category}`, v.secret.odd ? 'You’re the Odd Card' : v.secret.word, 'Your card. Press and hold to reveal.');
+const myCard = () => holdCard('me');
+// What a card shows while it is held. Looked up here in memory; the page itself never holds it.
+export function secretFor(key) {
+  const s = key === 'me' ? P?.view?.secret : key === 'local' ? P?.view?.localPass?.secret : null;
+  return s ? { small: `Category: ${s.category}`, title: s.odd ? ODD_TEXT : s.word } : null;
+}
+const localCard = lp => `<div class="cardslot"><p class="cardfor">Pass the phone to <b>${esc(lp.name)}</b>${lp.left > 1 ? ` · ${lp.left} left` : ''}</p>${holdCard('local', `${lp.name}’s card. Press and hold to reveal.`)}</div>`;
+const cardSlot = (v, label = 'Your card') => `<div class="cardslot"><p class="cardfor">${label}</p>${myCard()}</div>`;
 const next = (label, act, { cls = '', dis = false, extra = '' } = {}) => `<button class="next ${cls}" data-pa="${act}" ${extra} ${dis ? 'disabled' : ''}>${label}</button>`;
 
 // ---- screens ---------------------------------------------------------------
 function entryHTML() {
   return `<main class="wrap"><div class="bar"><button class="iconbtn" data-pa="exit" aria-label="Home">${icons.back()}</button><span class="grow"></span><button class="iconbtn" data-act="faq" aria-label="Rules and FAQ">?</button></div>
-  <div class="screen">${stage('felt', `<span class="eyebrow">Phones</span><h1 class="mid">Everyone plays on their own phone</h1>
+  <div class="screen">${stage('felt', `<span class="eyebrow">Join a game</span><h1 class="mid">Join on your own phone</h1>
     <label class="fld"><span>Your name</span><input data-pin="name" value="${esc(P.name)}" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="Name"></label>
-    ${err()}
-    <button class="next gold-btn" data-pa="host" ${P.wait ? 'disabled' : ''}>Host a Room</button>
-    <h2 class="mid">Join a room</h2>
     <label class="fld"><span>Room code</span><input class="codein" data-pin="codeInput" value="${esc(P.codeInput)}" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDEF"></label>
-    <button class="addbtn" data-pa="join" ${P.wait ? 'disabled' : ''}>Join Room</button>`)}</div></main>`;
+    ${err()}<button class="next gold-btn" data-pa="join" ${P.wait ? 'disabled' : ''}>Join Room</button>
+    <p class="note">The Host starts a room from New Game and shows the code and a QR.</p>`)}</div></main>`;
 }
 
 function joinHTML() {
@@ -188,24 +184,26 @@ function lobbyBody(v) {
 
 function passBody(v) {
   const g = v.game, readyN = g.ready.length, me = g.ready.includes(v.me.id);
-  return stage('spy', `<span class="eyebrow">Round ${g.round} · ${g.mode === 'grid' ? 'Grid' : 'Classic'}</span><h1 class="mid">Your card</h1>${myCard(v)}
-    <p class="note">Press and hold the card, then let go to hide it. ${g.oddCount} Odd ${plural(g.oddCount, 'Card', 'Cards')} this round. ${readyN} of ${g.total} ready.</p>`) + (g.grid ? stage('felt', `<span class="eyebrow">${esc(g.category)}</span>${gridOf(g)}<p class="note">Everyone sees the grid. Word Holders know which word it is. The Odd Card doesn’t.</p>`) : '');
+  return (v.localPass ? localCard(v.localPass) : '') + cardSlot(v, v.localPass ? 'Your own card' : 'Your card')
+    + stage('spy', `<span class="eyebrow">Round ${g.round} · ${g.mode === 'grid' ? 'Grid' : 'Classic'}</span><p class="note">Press and hold the card, then let go to hide it. ${g.oddCount} Odd ${plural(g.oddCount, 'Card', 'Cards')} this round. ${readyN} of ${g.total} ready.</p>`) + (g.grid ? stage('felt', `<span class="eyebrow">${esc(g.category)}</span>${gridOf(g)}<p class="note">Everyone sees the grid. Word Holders know which word it is. The Odd Card doesn’t.</p>`) : '');
 }
 
 function cluesBody(v) {
   const g = v.game, mine = g.speaker === v.me.id;
-  return stage('teal', `<span class="eyebrow">Clues · lap ${g.lap} of 2</span><div class="big">${mine ? 'You’re up' : nm(v, g.speaker)}</div>
+  return cardSlot(v) + stage('teal', `<span class="eyebrow">Clues · lap ${g.lap} of 2</span><div class="big">${mine ? 'You’re up' : nm(v, g.speaker)}</div>
     <div class="lines"><p class="line"><b>${mine ? 'Say one word that hints at the secret word.' : `${nm(v, g.speaker)}, your clue.`}</b></p></div>
     <p class="note">Turn ${g.turn + 1} of ${g.turns}. Started with ${nm(v, g.start)}, going ${g.dir}${g.next ? `. Up next: ${nm(v, g.next)}` : '. Last clue, then the vote'}.</p>`)
-    + stage('spy', `<span class="eyebrow">Your card</span>${myCard(v)}`) + gridBox(g, false);
+    + gridBox(g, false);
 }
 
 function voteBody(v) {
   const g = v.game;
   const btns = v.players.filter(p => p.seat >= 0 && p.id !== v.me.id).map(p => `<button class="pbtn${g.myVote === p.id ? ' on' : ''}" data-pa="vote" data-id="${p.id}">${esc(p.name)}</button>`).join('');
-  return stage('gold', `<span class="eyebrow">Vote</span><div class="lines"><p class="line"><b>Who is the Odd Card?</b></p></div>
+  const lv = g.localVoter;
+  const localVote = lv ? stage('teal', `<span class="eyebrow">Vote for ${esc(lv.name)}</span><p class="note">Pass the phone to ${esc(lv.name)}. Tap who they point at.</p><div class="players">${v.players.filter(p => p.seat >= 0 && p.id !== lv.id).map(p => `<button class="pbtn" data-pa="vote" data-as="${lv.id}" data-id="${p.id}">${esc(p.name)}</button>`).join('')}</div>`) : '';
+  return cardSlot(v) + localVote + stage('gold', `<span class="eyebrow">Vote</span><div class="lines"><p class="line"><b>Who is the Odd Card?</b></p></div>
     <p class="note">Tap a player. You can change your vote until everyone has voted. ${g.voted.length} of ${g.total} voted.${g.myVote ? ` You voted for ${nm(v, g.myVote)}.` : ''}</p><div class="players">${btns}</div>`)
-    + stage('spy', `<span class="eyebrow">Your card</span>${myCard(v)}`) + gridBox(g, false);
+    + gridBox(g, false);
 }
 
 function revealBody(v) {
@@ -217,8 +215,10 @@ function revealBody(v) {
 
 function guessBody(v) {
   const g = v.game, mine = g.accused === v.me.id;
+  const forLocal = !mine && isHost(v) && !!v.players.find(p => p.id === g.accused && p.local);
   let inner;
-  if (mine && g.grid) inner = `<div class="lines"><p class="line"><b>Tap the secret word on the grid. You get one guess.</b></p></div>${gridOf(g, true)}<p class="note">One tap. The app checks it.</p>`;
+  if (forLocal && g.grid) inner = `<div class="lines"><p class="line"><b>Pass the phone to ${nm(v, g.accused)}. Tap the secret word. One guess.</b></p></div>${gridOf(g, true)}`;
+  else if (mine && g.grid) inner = `<div class="lines"><p class="line"><b>Tap the secret word on the grid. You get one guess.</b></p></div>${gridOf(g, true)}<p class="note">One tap. The app checks it.</p>`;
   else if (mine) inner = `<div class="lines"><p class="line"><b>What is the secret word? You get one guess.</b></p></div>
     <label class="fld"><span>Your guess</span><input data-pin="guess" value="${esc(P.guess || g.guessText || '')}" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
     <button class="addbtn" data-pa="guess">${g.guessText ? 'Change Guess' : 'Submit Guess'}</button><p class="note">${g.guessText ? `You guessed <b>${esc(g.guessText)}</b>. The Host confirms it.` : 'The Host confirms it.'}</p>`;
@@ -253,13 +253,14 @@ function dockFor(v) {
     case 'lobby': return host ? next('Start Game', 'start', { dis: v.players.length < MIN_PLAYERS }) : '';
     case 'pass': {
       const ready = g.ready.includes(id);
+      if (host && v.localPass) return next('Done, Pass On', 'localReady', { dis: !P.revealedLocal });
       if (host) return next('Start Clues', 'begin', { dis: !P.revealed && !ready });
       return next(ready ? 'Waiting for Others' : 'Got It', 'ready', { dis: ready || !P.revealed });
     }
     case 'clues': return g.speaker === id || host ? next(g.turn === g.turns - 1 ? 'Go to Vote' : g.speaker === id ? 'Done, Next Player' : 'Next Player', 'clueDone') : '';
     case 'vote': return host ? next('Close Vote', 'closeVote', { cls: 'teal', dis: g.voted.length === 0 }) : '';
     case 'reveal': return host ? next(g.accusedOdd ? 'Odd Card Guesses' : 'Next', 'next') : '';
-    case 'guess': return host && !g.grid ? `<div class="row2"><button class="next teal" data-pa="judge" data-right="1">Right</button><button class="next red" data-pa="judge" data-right="0">Wrong</button></div>` : '';
+    case 'guess': return host ? (g.grid ? `<button class="next red" data-pa="judge" data-right="0">Skip Guess (Wrong)</button>` : `<div class="row2"><button class="next teal" data-pa="judge" data-right="1">Right</button><button class="next red" data-pa="judge" data-right="0">Wrong</button></div>`) : '';
     case 'flip': return host ? next('Show Scores', 'next') : '';
     case 'score': return host ? next(g.win.status === 'win' ? 'See the Winner' : g.win.status === 'tie' ? 'Tiebreak Round' : 'Next Round', 'next') : '';
     default: return '';
@@ -273,7 +274,7 @@ export function html() {
   const body = { lobby: lobbyBody, pass: passBody, clues: cluesBody, vote: voteBody, reveal: revealBody, guess: guessBody, flip: flipBody, score: scoreBody, over: scoreBody, ended: endedBody }[v.phase]?.(v) || '';
   const dock = v.phase === 'ended' ? `<button class="next" data-pa="leave">Home</button>` : dockFor(v);
   const bar = `<div class="bar">${g ? `<span class="pill gold">Round ${g.round}</span><span class="pill">First to ${g.target}</span>` : `<span class="pill gold">Room ${esc(v.code)}</span>`}${P.conn ? '' : '<span class="pill">Reconnecting…</span>'}<span class="grow"></span><button class="iconbtn" data-act="pmenu" aria-label="Menu">${icons.menu()}</button></div>`;
-  return `<main class="wrap">${bar}<div class="screen">${P.err && v.phase !== 'lobby' ? err() : ''}${body}${v.phase === 'lobby' ? err() : ''}</div>${dock ? `<div class="dock">${dock}</div>` : ''}</main>`;
+  return `<main class="wrap" data-phase="${v.phase}">${bar}<div class="screen">${P.err && v.phase !== 'lobby' ? err() : ''}${body}${v.phase === 'lobby' ? err() : ''}</div>${dock ? `<div class="dock">${dock}</div>` : ''}</main>`;
 }
 
 export function menuSheet() {
@@ -307,7 +308,7 @@ function toggleFullscreen(el) {
   if (el.requestFullscreen) el.requestFullscreen().catch(() => el.classList.add('is-full'));
   else el.classList.add('is-full');
 }
-function showQr() {
+export function showQr() {
   const v = P.view, link = joinUrl(location.origin, v.code);
   let el = document.getElementById('qrfs');
   if (!el) {
@@ -328,7 +329,6 @@ function showQr() {
 const A = {
   exit: () => exit(),
   leave: () => leave(),
-  host: hostRoom,
   join: joinRoom,
   kick: el => send({ type: 'kick', id: el.dataset.id }),
   mode: el => send({ type: 'settings', mode: el.dataset.mode }),
@@ -338,7 +338,8 @@ const A = {
   ready: () => send({ type: 'ready' }),
   begin: () => { send({ type: 'ready' }); send({ type: 'begin' }); },
   clueDone: () => send({ type: 'clueDone' }),
-  vote: el => send({ type: 'vote', id: el.dataset.id }),
+  vote: el => send({ type: 'vote', id: el.dataset.id, ...(el.dataset.as ? { as: el.dataset.as } : {}) }),
+  localReady: () => send({ type: 'ready', for: P.view.localPass?.id }),
   closeVote: () => send({ type: 'closeVote' }),
   next: () => send({ type: 'next' }),
   guess: () => { const t = P.guess.trim(); if (!t) return flash('Type your guess first.'); send({ type: 'guess', text: t }); },
@@ -363,7 +364,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('keydown', e => {
   if (P && e.key === 'Enter' && e.target.matches?.('[data-pin]')) {
-    if (P.step === 'entry') (e.target.dataset.pin === 'codeInput' ? joinRoom : hostRoom)();
+    if (P.step === 'entry') joinRoom();
     else if (P.step === 'join') joinRoom();
     else if (e.target.dataset.pin === 'guess') A.guess();
   }
@@ -371,9 +372,65 @@ document.addEventListener('keydown', e => {
 // A screen update that arrived while a card was held waits for the finger to lift.
 ['pointerup', 'pointercancel', 'keyup'].forEach(t => addEventListener(t, () => { if (P?.deferred) { P.deferred = false; setTimeout(deps.render, 0); } }));
 export const resetMenu = () => { if (P) P.confirmEnd = false; };
-export function markRevealed() {
-  if (!P || P.revealed) return;
+export function markRevealed(key) {
+  if (!P) return;
+  if (key === 'local') { P.revealedLocal = true; document.querySelectorAll('.dock [data-pa="localReady"]').forEach(b => { b.disabled = false; }); return; }
+  if (key !== 'me' || P.revealed) return;
   P.revealed = true;
   document.querySelectorAll('.dock [data-pa="ready"], .dock [data-pa="begin"]').forEach(b => { b.disabled = false; });
 }
 export const defer = () => { if (P) P.deferred = true; };
+
+// ---- the Host's setup carousel (setup.js) runs on top of a room in the lobby -------------------------------
+// status: 'off' (no room, play with One phone), 'connecting', 'ready'. players come from the room, so phones that join show up live.
+export function setupInfo() {
+  if (!P?.setup) return { status: 'off', error: setupFail, code: null, players: [], me: null };
+  const v = P.view;
+  if (!v) return { status: 'connecting', error: P.err, code: P.code, players: [], me: null };
+  return { status: 'ready', error: P.err, code: v.code, players: v.players, me: v.me.id, link: joinUrl(location.origin, v.code), settings: v.settings };
+}
+export async function openSetup(hostName) {
+  if (P) return;
+  setupFail = '';
+  P = fresh({ setup: true, name: hostName, step: 'room', wait: true });
+  deps.render();
+  try {
+    const res = await fetch('/api/create', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    if (!P?.setup) return;
+    store.set(K.host(data.code), data.hostKey);
+    P.code = data.code; P.wait = false;
+    sendJoin();
+  } catch (e) { P = null; setupFail = navigator.onLine === false ? 'You’re offline.' : 'Couldn’t reach the server.'; deps.render(); }
+}
+// A refresh in the middle of setup: go back into the same room with the stored seat.
+export function resumeSetup(code) { P = fresh({ code, step: 'room', setup: true }); connect(); }
+export const resetSetupFail = () => { setupFail = ''; };
+// Make the room's local seats match `want` (names on this phone, not counting the Host).
+export function syncLocals(want) {
+  const v = P?.view;
+  if (!P?.setup || !v || v.phase !== 'lobby' || !v.me.host || ws?.readyState !== 1) return;
+  const have = v.players.filter(p => p.local), key = n => n.toLowerCase(), now = Date.now();
+  const wanted = new Set(want.map(key));
+  for (const p of have) if (!wanted.has(key(p.name))) send({ type: 'kick', id: p.id });
+  for (const n of want) if (!have.some(p => key(p.name) === key(n)) && !(P.sent[key(n)] > now - 3000)) { P.sent[key(n)] = now; send({ type: 'addLocal', name: n }); }
+}
+export const kickPlayer = id => send({ type: 'kick', id });
+export const applySettings = st => {
+  const v = P?.view, key = `${st.mode}:${st.target}`;
+  if (!v || v.phase !== 'lobby' || ws?.readyState !== 1 || (v.settings.mode === st.mode && v.settings.target === st.target)) return;
+  if (P.settingsSent?.key === key && Date.now() - P.settingsSent.at < 2000) return;
+  P.settingsSent = { key, at: Date.now() };
+  send({ type: 'settings', mode: st.mode, target: st.target });
+};
+// Hand the room to the play screens. The next view (phase 'pass') takes over the page.
+export function startRoom(st) {
+  if (!P) return;
+  if (st) send({ type: 'settings', mode: st.mode, target: st.target });
+  send({ type: 'start' }); P.starting = true; P.setup = false;
+  try { history.replaceState(null, '', `?room=${P.code}`); } catch { /* sandboxed */ }
+  deps.render();
+}
+export function endSetup() { if (P?.setup) { const h = P.code; if (h) { send({ type: 'end' }); } leave(); } }
+export const inSetup = () => !!P?.setup;

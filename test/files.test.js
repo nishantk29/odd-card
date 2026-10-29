@@ -49,14 +49,6 @@ test('regression: scoreboard SPY badge sits outside the ellipsised name', () => 
   assert.ok(!/\.srow \.nm\{[^}]*text-overflow/.test(css));
 });
 
-test('regression: Add player picks an unused default seat name', () => {
-  assert.match(appSrc, /while \(S\.setup\.names\.includes\(`Seat \$\{k\}`\)\) k\+\+/);
-});
-
-test('regression: winhome keeps target as well as names', () => {
-  assert.match(appSrc, /winhome\(\) \{[^}]*S\.setup\.target = G\(\)\.target/);
-});
-
 test('FAQ: 12+ entries, search is case-insensitive with <mark> highlights', () => {
   assert.ok(FAQ.length >= 12);
   assert.equal(faqResults('').match(/<details/g).length, FAQ.length);
@@ -102,12 +94,14 @@ test('hold-to-reveal: one shared card template for both roles and both modes, on
   const phonesSrc = readFileSync(join(jsDir, 'phones.js'), 'utf8');
   assert.equal((hold.match(/class="holdcard"/g) || []).length, 1);
   assert.equal((appSrc.match(/class="holdcard"/g) || []).length + (phonesSrc.match(/class="holdcard"/g) || []).length, 0);
-  assert.ok(/v\.secret\.odd \? 'You’re the Odd Card' : v\.secret\.word/.test(phonesSrc));
-  assert.ok(/r\.spies\.includes\(r\.pass\) \? 'You’re the Odd Card' : r\.word/.test(appSrc));
+  assert.ok(/s\.odd \? ODD_TEXT : s\.word/.test(phonesSrc));
+  assert.ok(/r\.spies\.includes\(r\.pass\) \? ODD_TEXT : r\.word/.test(appSrc));
+  assert.match(hold, /ODD_TEXT = 'You are the Odd Card'/);
+  assert.equal(hold.match(/class="hc-front"[^>]*><\/div>/g)?.length, 1, 'the face is empty in the markup');
   assert.equal((hold.match(/navigator\.vibrate/g) || []).length, 2); // guard + call, in buzz()
   assert.equal((appSrc.match(/navigator\.vibrate/g) || []).length + (phonesSrc.match(/navigator\.vibrate/g) || []).length, 0);
   assert.match(hold, /export const buzz = \(\) => \{ try \{ if \(cfg\.haptics\(\) && navigator\.vibrate\)/);
-  assert.match(css, /\.hc-front strong\{[^}]*min-height/);
+  assert.match(readFileSync(join(jsDir, '..', 'setup.css'), 'utf8'), /\.hc-front strong\{[^}]*font-size/);
 });
 
 test('platform: wake lock re-acquired on visibility, v2 storage key, overflow-x clip, reduced motion', () => {

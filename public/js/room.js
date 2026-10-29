@@ -6,17 +6,22 @@ import * as E from './engine.js';
 
 export const MIN_PLAYERS = E.MIN_PLAYERS;
 export const MAX_PLAYERS = E.MAX_PLAYERS;
+// Bumped when a rule change must not reach rooms that already started; a room keeps the version it was created with.
+export const ROOM_RULES_VERSION = 2;
 const NAME_MAX = 20;
 
 const ok = (data = {}) => ({ ok: true, data });
 const err = (error) => ({ error });
 const byId = (room, id) => room.players.find(p => p.id === id);
+// A local seat is a player who sits at the Host's phone: no socket, no token. The Host passes the phone to them.
+const isLocal = (room, id) => !!byId(room, id)?.local;
+const localsInOrder = room => room.order.map(id => byId(room, id)).filter(p => p?.local);
 const cleanName = s => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX);
 const randToken = rng => Array.from({ length: 16 }, () => Math.floor(rng() * 256).toString(16).padStart(2, '0')).join('');
 export const cryptoRng = () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
 
 export function newRoom(code, hostKey) {
-  return { code, hostKey, phase: 'lobby', players: [], nextId: 1, settings: { mode: 'classic', target: E.DEFAULT_TARGET }, game: null, order: [], ready: {}, votes: {}, tally: null, guessText: null, updated: 0 };
+  return { code, hostKey, rulesVersion: ROOM_RULES_VERSION, phase: 'lobby', players: [], nextId: 1, settings: { mode: 'classic', target: E.DEFAULT_TARGET }, game: null, order: [], ready: {}, votes: {}, tally: null, guessText: null, updated: 0 };
 }
 
 // ---- engine bridge -------------------------------------------------------
@@ -86,6 +91,17 @@ export function reduce(room, actor, msg, rng = cryptoRng) {
       room.players.push(p);
       return ok({ playerId: p.id, token: p.token, host });
     }
+    case 'addLocal': {
+      const e = hostOnly(); if (e) return e;
+      if (room.phase !== 'lobby') return err('Players can only be added in the lobby.');
+      const name = cleanName(msg.name);
+      if (!name) return err('Type a name first.');
+      if (room.players.some(p => p.name.toLowerCase() === name.toLowerCase())) return err('Someone already has that name. Pick another.');
+      if (room.players.length >= MAX_PLAYERS) return err(`The room is full (${MAX_PLAYERS} players).`);
+      const p = { id: `p${room.nextId++}`, name, token: null, host: false, local: true };
+      room.players.push(p);
+      return ok({ playerId: p.id });
+    }
     case 'kick': {
       const e = hostOnly(); if (e) return e;
       if (room.phase !== 'lobby') return err('Players can only be removed in the lobby.');
@@ -128,13 +144,22 @@ export function reduce(room, actor, msg, rng = cryptoRng) {
   const mySeat = seatOf(room, me.id);
 
   switch (msg.type) {
-    case 'ready': // I have seen my card
+    case 'ready': { // I have seen my card (the Host can say it for a local seat after passing the phone)
       if (room.phase !== 'pass') return err('Cards are already dealt.');
+      if (msg.for) {
+        if (!isHost) return err('Only the Host can do that.');
+        if (!isLocal(room, msg.for)) return err('That player has their own phone.');
+        room.ready[msg.for] = true;
+        return ok();
+      }
       room.ready[me.id] = true;
       return ok();
+    }
     case 'begin': { // Host: start the clues once cards are seen
       const e = hostOnly(); if (e) return e;
       if (room.phase !== 'pass') return err('Cards are already dealt.');
+      const waiting = localsInOrder(room).find(p => !room.ready[p.id]);
+      if (waiting) return err(`Pass the phone to ${waiting.name} first.`);
       while (room.game.phase === 'pass') if (!step(room, { type: 'NEXT' })) break;
       if (room.game.phase === 'grid') step(room, { type: 'NEXT' }); // the grid is already on every phone
       room.phase = room.game.phase; room.ready = {};
@@ -150,10 +175,16 @@ export function reduce(room, actor, msg, rng = cryptoRng) {
     }
     case 'vote': {
       if (room.phase !== 'vote') return err('It isn’t time to vote.');
+      let voter = me;
+      if (msg.as) { // the Host votes for a local seat
+        if (!isHost) return err('Only the Host can do that.');
+        if (!isLocal(room, msg.as)) return err('That player has their own phone.');
+        voter = byId(room, msg.as);
+      }
       const target = byId(room, msg.id);
       if (!target || seatOf(room, target.id) < 0) return err('Pick a player.');
-      if (target.id === me.id) return err('You can’t vote for yourself.');
-      room.votes[me.id] = target.id;
+      if (target.id === voter.id) return err('You can’t vote for yourself.');
+      room.votes[voter.id] = target.id;
       if (Object.keys(room.votes).length >= room.order.length) return closeVote(room);
       return ok();
     }
@@ -170,7 +201,7 @@ export function reduce(room, actor, msg, rng = cryptoRng) {
     }
     case 'guess': { // the accused Odd Card
       if (room.phase !== 'guess') return err('It isn’t time to guess.');
-      if (mySeat !== g.round.accused) return err('Only the accused Odd Card guesses.');
+      if (mySeat !== g.round.accused && !(isHost && isLocal(room, idAt(room, g.round.accused)))) return err('Only the accused Odd Card guesses.');
       if (g.round.mode === 'grid') {
         if (!step(room, { type: 'GUESS', word: msg.word })) return err('Tap one of the 16 words.');
         room.phase = room.game.phase;
@@ -181,10 +212,11 @@ export function reduce(room, actor, msg, rng = cryptoRng) {
       room.guessText = text;
       return ok();
     }
-    case 'judge': { // Classic: the Host says whether the typed guess was right
+    case 'judge': { // Classic: the Host says whether the guess was right. Grid: the Host can skip a guess that never comes (counts as wrong).
       const e = hostOnly(); if (e) return e;
-      if (room.phase !== 'guess' || g.round.mode === 'grid') return err('Not now.');
-      step(room, { type: 'GUESS', right: !!msg.right });
+      if (room.phase !== 'guess') return err('Not now.');
+      if (g.round.mode === 'grid') step(room, { type: 'GUESS', word: g.round.grid.find(w => w !== g.round.word) });
+      else step(room, { type: 'GUESS', right: !!msg.right });
       room.phase = room.game.phase;
       return ok();
     }
@@ -199,8 +231,8 @@ const RESULT_PHASES = ['flip', 'score', 'over'];
 export function viewForPlayer(room, playerId, connected = new Set()) {
   const me = byId(room, playerId);
   const g = room.game;
-  const players = room.players.map(p => ({ id: p.id, name: p.name, host: !!p.host, online: connected.has(p.id), seat: room.order.indexOf(p.id) }));
-  const view = { code: room.code, phase: room.phase, me: { id: playerId, name: me?.name, host: !!me?.host }, players, settings: { ...room.settings }, game: null, secret: null };
+  const players = room.players.map(p => ({ id: p.id, name: p.name, host: !!p.host, local: !!p.local, online: !!p.local || connected.has(p.id), seat: room.order.indexOf(p.id) }));
+  const view = { code: room.code, phase: room.phase, me: { id: playerId, name: me?.name, host: !!me?.host }, players, settings: { ...room.settings }, game: null, secret: null, localPass: null };
   if (!g || room.phase === 'ended') return view;
   const r = g.round, n = g.names.length, seatId = i => idAt(room, i);
   const mySeat = room.order.indexOf(playerId);
@@ -220,7 +252,11 @@ export function viewForPlayer(room, playerId, connected = new Set()) {
     view.game.speaker = seatId(E.clueSeat(r, n, r.turn));
     view.game.next = r.turn < 2 * n - 1 ? seatId(E.clueSeat(r, n, r.turn + 1)) : null;
   }
-  if (room.phase === 'vote') { view.game.voted = Object.keys(room.votes); view.game.myVote = room.votes[playerId] || null; }
+  if (room.phase === 'vote') {
+    view.game.voted = Object.keys(room.votes); view.game.myVote = room.votes[playerId] || null;
+    const lv = me?.host ? localsInOrder(room).find(p => !room.votes[p.id]) : null;
+    view.game.localVoter = lv ? { id: lv.id, name: lv.name } : null;
+  }
   if (['reveal', 'guess', ...RESULT_PHASES].includes(room.phase)) {
     view.game.accused = seatId(r.accused);
     view.game.accusedOdd = r.accused !== null && r.spies.includes(r.accused);
@@ -229,6 +265,11 @@ export function viewForPlayer(room, playerId, connected = new Set()) {
   if (room.phase === 'guess') view.game.guessText = room.guessText;
   // my own card: the word for a Word Holder, "Odd Card" for the Odd Card; never both
   if (mySeat >= 0 && !done) view.secret = r.spies.includes(mySeat) ? { category: r.category, odd: true } : { category: r.category, odd: false, word: r.word };
+  // A local seat's card goes to the Host's phone only while the phone is being passed to that seat.
+  if (me?.host && room.phase === 'pass') {
+    const lp = localsInOrder(room).find(p => !room.ready[p.id]);
+    if (lp) { const seat = room.order.indexOf(lp.id); view.localPass = { id: lp.id, name: lp.name, left: localsInOrder(room).filter(p => !room.ready[p.id]).length, secret: r.spies.includes(seat) ? { category: r.category, odd: true } : { category: r.category, odd: false, word: r.word } }; }
+  }
   if (done) {
     view.game.result = {
       outcome: r.outcome, text: E.OUTCOME_TEXT[r.outcome], word: r.word, odd: r.spies.map(seatId), guess: r.guess, guessRight: r.guessRight,

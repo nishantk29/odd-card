@@ -199,7 +199,6 @@ test('grid mode: every phone gets the same 16-word grid; the accused taps a word
   must(act(t.room, t.host, { type: 'next' }));
   assert.equal(t.room.phase, 'guess');
   assert.match(act(t.room, odd, { type: 'guess', word: 'not in the grid' }).error, /16 words/);
-  assert.match(act(t.room, t.host, { type: 'judge', right: true }).error, /Not now/);
   const wrong = grids[0].find(w => w !== word);
   must(act(t.room, odd, { type: 'guess', word: wrong }));
   assert.equal(t.room.phase, 'flip');
@@ -268,4 +267,100 @@ test('actions outside a game or by a stranger are refused', () => {
   assert.match(act(t.room, 'p99', { type: 'ready' }).error, /not in this game/);
   assert.match(act(t.room, t.host, { type: 'vote', id: t.ids[1] }).error, /time to vote/);
   assert.match(act(t.room, t.host, { type: 'bogus' }).error, /Unknown/);
+});
+
+test('grid: the Host can skip a guess that never comes, and it counts as wrong', () => {
+  const t = started(5, 'grid', 11);
+  toVote(t);
+  const odd = oddIds(t)[0], holder = t.ids.slice(1).find(id => id !== odd);
+  voteAll(t, odd, holder);
+  must(act(t.room, t.host, { type: 'next' }));
+  assert.match(act(t.room, holder, { type: 'judge' }).error, /Host/);
+  must(act(t.room, t.host, { type: 'judge' }));
+  assert.equal(t.room.phase, 'flip');
+  assert.equal(viewForPlayer(t.room, holder).game.result.outcome, 'spyWrong');
+});
+
+// ---- local seats: players who sit at the Host's phone ---------------------------------------------------------
+function mixed(nPhones = 2, locals = ['Cleo', 'Dev'], seed = 3) {
+  const t = lobby(nPhones, seed);
+  const lids = locals.map(name => must(act(t.room, t.host, { type: 'addLocal', name })).data.playerId);
+  must(act(t.room, t.host, { type: 'start' }, t.rng));
+  return { ...t, lids, everyone: [...t.ids, ...lids] };
+}
+const secretText = v => (v.secret ? JSON.stringify(v.secret) : '');
+
+test('local seats: only the Host adds them, in the lobby, with a free name', () => {
+  const t = lobby(3);
+  assert.match(act(t.room, t.ids[1], { type: 'addLocal', name: 'X' }).error, /Host/);
+  assert.match(act(t.room, t.host, { type: 'addLocal', name: '  ' }).error, /name/);
+  assert.match(act(t.room, t.host, { type: 'addLocal', name: 'p1' }).error, /already has that name/);
+  const id = must(act(t.room, t.host, { type: 'addLocal', name: 'Cleo' })).data.playerId;
+  assert.equal(viewForPlayer(t.room, t.host).players.find(p => p.id === id).local, true);
+  assert.equal(viewForPlayer(t.room, t.host).players.find(p => p.id === id).online, true);
+  must(act(t.room, t.host, { type: 'start' }, t.rng)); // 3 phones + 1 local seat = 4
+  assert.match(act(t.room, t.host, { type: 'addLocal', name: 'Late' }).error, /lobby/);
+  assert.equal(reduce(t.room, {}, { type: 'join', name: 'Cleo' }).error !== undefined, true);
+});
+
+test('local seats: the Host sees a local card only during that seat\'s pass, nobody else ever does', () => {
+  const t = mixed();
+  const [c, d] = t.lids;
+  const seatOdd = id => rd(t).spies.includes(t.room.order.indexOf(id));
+  let hv = viewForPlayer(t.room, t.host);
+  assert.equal(hv.localPass.id, c, 'first local seat in seat order');
+  assert.equal(hv.localPass.left, 2);
+  assert.equal(!!hv.localPass.secret.odd, seatOdd(c));
+  assert.equal(hv.localPass.secret.word, seatOdd(c) ? undefined : rd(t).word);
+  for (const id of t.ids.slice(1)) {
+    const v = viewForPlayer(t.room, id);
+    assert.equal(v.localPass, null);
+    assert.equal(v.secret.odd, seatOdd(id));
+  }
+  assert.match(act(t.room, t.host, { type: 'begin' }).error, /Pass the phone to Cleo/);
+  assert.match(act(t.room, t.ids[1], { type: 'ready', for: c }).error, /Host/);
+  assert.match(act(t.room, t.host, { type: 'ready', for: t.ids[1] }).error, /own phone/);
+  must(act(t.room, t.host, { type: 'ready', for: c }));
+  hv = viewForPlayer(t.room, t.host);
+  assert.equal(hv.localPass.id, d);
+  assert.equal(hv.localPass.left, 1);
+  must(act(t.room, t.host, { type: 'ready', for: d }));
+  hv = viewForPlayer(t.room, t.host);
+  assert.equal(hv.localPass, null, 'after the pass the Host holds no local card');
+  assert.ok(hv.secret, 'the Host still has their own card');
+  t.ids.forEach(id => must(act(t.room, id, { type: 'ready' })));
+  must(act(t.room, t.host, { type: 'begin' }));
+  assert.equal(t.room.phase, 'clues');
+  assert.equal(viewForPlayer(t.room, t.host).localPass, null);
+});
+
+test('local seats: the Host votes for them one at a time and cannot vote for a phone player', () => {
+  const t = mixed();
+  t.ids.forEach(id => must(act(t.room, id, { type: 'ready' }))); t.lids.forEach(id => must(act(t.room, t.host, { type: 'ready', for: id })));
+  must(act(t.room, t.host, { type: 'begin' }));
+  for (let i = 0; i < 2 * t.everyone.length; i++) must(act(t.room, t.host, { type: 'clueDone' }));
+  assert.equal(t.room.phase, 'vote');
+  assert.equal(viewForPlayer(t.room, t.host).game.localVoter.id, t.lids[0]);
+  assert.equal(viewForPlayer(t.room, t.ids[1]).game.localVoter, null);
+  assert.match(act(t.room, t.ids[1], { type: 'vote', id: t.host, as: t.lids[0] }).error, /Host/);
+  assert.match(act(t.room, t.host, { type: 'vote', id: t.host, as: t.ids[1] }).error, /own phone/);
+  assert.match(act(t.room, t.host, { type: 'vote', id: t.lids[0], as: t.lids[0] }).error, /yourself/);
+  must(act(t.room, t.host, { type: 'vote', id: t.ids[1], as: t.lids[0] }));
+  assert.equal(viewForPlayer(t.room, t.host).game.localVoter.id, t.lids[1]);
+  must(act(t.room, t.host, { type: 'vote', id: t.ids[1], as: t.lids[1] }));
+  assert.equal(viewForPlayer(t.room, t.host).game.localVoter, null);
+  t.ids.forEach(id => must(act(t.room, id, { type: 'vote', id: id === t.ids[1] ? t.host : t.ids[1] })));
+  assert.equal(t.room.phase, 'reveal', 'everyone voted, the vote closes');
+  assert.equal(t.room.game.round.accused, t.room.order.indexOf(t.ids[1]));
+});
+
+test('local seats: no phone ever receives the local seats\' cards (views carry no localPass and own secrets only)', () => {
+  const t = mixed(3, ['Cleo']);
+  const odd = oddIds(t)[0];
+  for (const id of t.ids) {
+    const v = viewForPlayer(t.room, id);
+    assert.equal(v.secret.odd, id === odd);
+    if (id !== t.host) assert.equal(v.localPass, null);
+    if (id === odd) assert.ok(!secretText(v).includes(rd(t).word));
+  }
 });
