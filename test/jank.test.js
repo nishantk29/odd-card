@@ -27,3 +27,11 @@ test('partitions use the opaque divider token, resolved per surface', () => {
   assert.match(s, /\.su-sheet\{--divider:color-mix\(in oklab,rgb\(255,247,230\) 16%,var\(--sheet\)\)/);
   assert.doesNotMatch(s, /border[\w-]*:[^;}]*var\(--hair\)/);
 });
+
+test('starting a room keeps setup on screen until the game view arrives (no empty lobby flash)', () => {
+  const p = fs.readFileSync(new URL('../public/js/phones.js', import.meta.url), 'utf8');
+  const i = p.indexOf('export function startRoom');
+  const body = p.slice(i, p.indexOf('\n}', i));
+  assert.ok(!/P\.setup = false/.test(body), 'startRoom must not drop setup before the room confirms');
+  assert.match(p, /if \(v\.phase !== 'lobby'\) \{ P\.starting = false; if \(P\.setup\) P\.setup = false; \}/);
+});

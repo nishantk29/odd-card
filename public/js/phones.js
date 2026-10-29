@@ -426,9 +426,11 @@ export const applySettings = st => {
 };
 // Hand the room to the play screens. The next view (phase 'pass') takes over the page.
 export function startRoom(st) {
-  if (!P) return;
+  if (!P || P.starting) return;
+  if (ws?.readyState !== 1) return send({ type: 'start' }); // not connected: send() says so, and Start round stays tappable
   if (st) send({ type: 'settings', mode: st.mode, target: st.target });
-  send({ type: 'start' }); P.starting = true; P.setup = false;
+  // Setup stays on screen until the room says the game is running (onView hands over), so the empty lobby never flashes between them.
+  send({ type: 'start' }); P.starting = true;
   try { history.replaceState(null, '', `?room=${P.code}`); } catch { /* sandboxed */ }
   deps.render();
 }
