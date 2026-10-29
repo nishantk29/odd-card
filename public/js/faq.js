@@ -1,12 +1,18 @@
 import { esc } from './art.js';
+import { MIN_PLAYERS, MAX_PLAYERS, MIN_TARGET, MAX_TARGET, DEFAULT_TARGET, MAX_UNDO, spyCount } from './engine.js';
+
+// Player counts per spy count, read from the engine so the FAQ can't drift from the deal.
+const counts = (k) => { const ns = []; for (let n = MIN_PLAYERS; n <= MAX_PLAYERS; n++) if (spyCount(n) === k) ns.push(n); return ns; };
+const ONE = counts(1), TWO = counts(2);
+const span = (ns) => `${ns[0]} to ${ns[ns.length - 1]}`;
 
 // FAQ content for the searchable FAQ sheet. Fields: q, a (text), steps (numbered list), list (bullet list), k (extra search words).
 export const FAQ = [
-  { q: 'What is The Odd Card?', a: 'A word game for 4–12 players. Everyone gets a secret card on one phone, passed around the table. Most players are Word Holders who know the secret word. One player (two with 8 or more) is the Odd Card and has to bluff.' },
+  { q: 'What is The Odd Card?', a: `A word game for ${MIN_PLAYERS} to ${MAX_PLAYERS} players. Everyone gets a secret card on one phone, passed around the table. Most players are Word Holders who know the secret word. One player (two with 8 or more) is the Odd Card and has to bluff.` },
   { q: 'How does a round work?', steps: ['Pass the phone. Each player secretly looks at their card.', 'Clues. Two laps, one word each.', 'Vote. Everyone points on three. The Host taps the most-pointed-at player, or Tie.', 'The accused Odd Card gets one guess at the word.', 'Scores update and the next round starts.'] },
   { q: 'Who is the Host?', a: 'The Host is whoever holds the phone and taps Next, the vote and the scores. The Host plays like everyone else, and you don’t need a deck of cards.' },
-  { q: 'How do we set up a game?', steps: ['Tap New Game.', 'Enter every player’s name in seat order. You can add up to 12.', 'Pick a mode: Classic or Grid.', 'Pick the target score, 4–10 points (default 6).', 'Tap Start Game.'] },
-  { q: 'How many Odd Cards are there?', list: ['4–7 players: 1 Odd Card.', '8–12 players: 2 Odd Cards.'], k: 'spy spies' },
+  { q: 'How do we set up a game?', steps: ['Tap New Game.', `Enter every player’s name in seat order. You can add up to ${MAX_PLAYERS}.`, 'Pick a mode: Classic or Grid.', `Pick the target score, ${MIN_TARGET} to ${MAX_TARGET} points (default ${DEFAULT_TARGET}).`, 'Tap Start Game.'] },
+  { q: 'How many Odd Cards are there?', list: [`${span(ONE)} players: 1 Odd Card.`, `${span(TWO)} players: 2 Odd Cards.`], k: 'spy spies' },
   { q: 'What are Classic and Grid modes?', list: ['Classic: one secret word. Word Holders see the word and its category. The Odd Card sees only the category.', 'Grid: a 4×4 grid of 16 words from one category is shown to everyone before clues. The secret word is one of them. The Odd Card guesses by tapping a word on the grid.'] },
   { q: 'How does passing the phone work?', steps: ['The screen says “Pass to” and a name. Hand the phone to that player.', 'They press and hold the card back to see it. Let go and it hides again.', 'They tap Done, Pass On. The button unlocks after one reveal.', 'The next player gets the phone. After the last player, clues begin.'] , k: 'reveal hold card secret' },
   { q: 'What do the two cards look like?', a: 'Both cards have the same size, colours, timing and vibration, so nobody can tell them apart by watching.', list: ['Word card: the category and the secret word.', 'Odd Card: the category and “You’re the Odd Card”.'] },
@@ -17,10 +23,10 @@ export const FAQ = [
   { q: 'What happens on a tie vote?', a: 'No one is accused and every Odd Card escapes. Each Odd Card scores 2 points.' },
   { q: 'What happens when the accused player is revealed?', a: 'The app shows whether they were the Odd Card. A Word Holder means the Odd Cards win the round. An Odd Card gets one guess at the secret word.' },
   { q: 'How is a round scored?', list: ['Odd Card not accused: 2 points.', 'Accused Odd Card guesses the word: 1 point.', 'Accused Odd Card guesses wrong: every Word Holder gets 1 point.', 'Accused Word Holder: each Odd Card gets 2 points.', 'Tie vote: each Odd Card gets 2 points.'] },
-  { q: 'How do I win?', a: 'Scores carry across rounds. The first player to reach the target score (default 6, you choose 4–10) wins. If the top score is shared, play one more round until one player is alone on top.' },
+  { q: 'How do I win?', a: `Scores carry across rounds. The first player to reach the target score (default ${DEFAULT_TARGET}, you choose ${MIN_TARGET} to ${MAX_TARGET}) wins. If the top score is shared, play one more round until one player is alone on top.` },
   { q: 'What if the guess is close?', a: 'In Classic mode the Host decides. A good house rule: the exact word, a plural, or an obvious synonym counts as Right. In Grid mode the app checks the tapped word for you.' },
   { q: 'Can I play without internet?', a: 'Yes. The Odd Card is an installable app. After the first load it works with no signal, and only the phone you pass around needs it. Phones mode needs an internet connection.', steps: ['Open The Odd Card once while you’re online.', 'iPhone: tap Share, then Add to Home Screen, then Add.', 'Android: tap Install app, or the browser menu, then Install.', 'Open it from your home screen. It now loads with no signal.'], k: 'offline wifi internet install pwa home screen' },
-  { q: 'Can I undo a mistake?', a: 'Yes. Open the menu and tap Undo Last Step. You can step back as many times as you need, even across rounds.' },
+  { q: 'Can I undo a mistake?', a: `Yes. Open the menu and tap Undo Last Step. You can step back up to ${MAX_UNDO} steps, even across rounds.` },
   { q: 'What if I refresh the page?', a: 'The game is saved on this device after every step, so a refresh resumes where you were. Nothing is sent over the network.' },
   { q: 'The screen keeps turning off.', a: 'The app asks your phone to keep the screen on during a game. If it still locks, check that Keep Screen On is switched on in Settings, and that low-power mode is off.', k: 'wake lock sleep dim' },
   { q: 'Where are the settings?', a: 'Tap Settings on the home screen or in the menu. You can turn animations, vibration, and Keep Screen On on or off.', k: 'animations vibration haptics motion' },
