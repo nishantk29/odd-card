@@ -125,3 +125,11 @@ test('home has Rules & FAQ card and a 4-step How to Play list', () => {
   assert.match(home, /class="rulescard" data-act="faq"/);
   assert.equal((home.match(/<li><b>/g) || []).length, 4);
 });
+
+test('every public file except sw.js is precached, so the app opens offline', () => {
+  const sw = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8');
+  const root = new URL('../public/', import.meta.url).pathname;
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(d + e.name + '/') : [d + e.name]);
+  const missing = walk(root).map((f) => '/' + f.slice(root.length)).filter((r) => r !== '/sw.js' && r !== '/index.html' && !r.split('/').pop().startsWith('.') && !sw.includes(`'${r}'`));
+  assert.deepEqual(missing, []);
+});
