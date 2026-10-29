@@ -30,6 +30,8 @@ function dispatch(action) {
 
 // ---- small view helpers ------------------------------------------------
 const lines = list => `<div class="lines">${list.map(l => `<p class="line ${l.type}"><span class="lbl">${l.type === 'say' ? 'Say' : 'Gesture'}:</span> <b>${esc(l.text)}</b></p>`).join('')}</div>`;
+// Longest word in a secret word or category: the word card scales its type so a long word stays whole on one line.
+const wl = (t) => Math.max(4, ...String(t).split(/\s+/).map((w) => w.length));
 const stage = (cls, inner) => `<div class="stack3"><section class="stage ${cls}">${inner}</section></div>`;
 const nameOf = i => esc(G().names[i]);
 const spiesText = g => g.round.spies.map(i => esc(g.names[i])).join(' and ');
@@ -88,9 +90,9 @@ function nightBody(g) {
   const head = `<span class="eyebrow">Night · ${r.step + 1} of ${E.NIGHT.length}</span>`;
   let extra = '';
   if (st.screen === 'word') {
-    extra = `<button class="wordcard${T.hidden ? ' hid' : ''}" data-act="toggleWord" aria-label="Secret word. Tap to ${T.hidden ? 'show' : 'hide'}"><small>Category: ${esc(r.category)}</small><strong>${esc(r.word)}</strong><em>${T.hidden ? 'Tap to show' : 'Tap to hide'}</em></button>`;
+    extra = `<button class="wordcard${T.hidden ? ' hid' : ''}" data-act="toggleWord" aria-label="Secret word. Tap to ${T.hidden ? 'show' : 'hide'}"><small>Category: ${esc(r.category)}</small><strong style="--wl:${wl(r.word)}">${esc(r.word)}</strong><em>${T.hidden ? 'Tap to show' : 'Tap to hide'}</em></button>`;
   } else if (st.screen === 'pick') {
-    extra = `<div class="wordcard"><small>Secret word's category</small><strong>${esc(r.category)}</strong></div>
+    extra = `<div class="wordcard"><small>Secret word's category</small><strong style="--wl:${wl(r.category)}">${esc(r.category)}</strong></div>
       <p class="note"><b>Host:</b> tap who opened their eyes (${r.opened.length} of ${r.spyCount}).</p>${playerButtons(r.opened, 'toggle')}`;
   }
   return stage('spy', `${head}${lines(st.lines)}${extra}`);
@@ -119,7 +121,7 @@ function revealBody(g) {
 function guessBody(g) {
   const r = g.round;
   return stage('spy', `<span class="eyebrow">Guess</span><div class="big">${nameOf(r.accused)}</div>${lines(E.cueFor(g))}
-    <div class="wordcard"><small>Secret word (host only)</small><strong>${esc(r.word)}</strong></div><p class="note"><b>Host:</b> did they say the word?</p>`);
+    <div class="wordcard"><small>Secret word (host only)</small><strong style="--wl:${wl(r.word)}">${esc(r.word)}</strong></div><p class="note"><b>Host:</b> did they say the word?</p>`);
 }
 
 function flipBody(g) {
