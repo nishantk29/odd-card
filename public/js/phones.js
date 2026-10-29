@@ -142,7 +142,7 @@ export function secretFor(key) {
   const s = key === 'me' ? P?.view?.secret : key === 'local' ? P?.view?.localPass?.secret : null;
   return s ? { small: `Category: ${s.category}`, title: s.odd ? ODD_TEXT : s.word } : null;
 }
-const localCard = lp => `<div class="cardslot"><p class="cardfor">Pass the phone to <b>${esc(lp.name)}</b>${lp.left > 1 ? ` · ${lp.left} left` : ''}</p>${holdCard('local', `${lp.name}’s card. Press and hold to reveal.`)}</div>`;
+const localCard = lp => `<div class="cardslot"><p class="cardfor">Pass the phone to <b>${esc(lp.name)}</b>${lp.left > 1 ? ` (${lp.left} left)` : ''}</p>${holdCard('local', `${lp.name}’s card. Press and hold to reveal.`)}</div>`;
 const cardSlot = (v, label = 'Your card') => `<div class="cardslot"><p class="cardfor">${label}</p>${myCard()}</div>`;
 const next = (label, act, { cls = '', dis = false, extra = '' } = {}) => `<button class="next ${cls}" data-pa="${act}" ${extra} ${dis ? 'disabled' : ''}>${label}</button>`;
 
@@ -173,8 +173,8 @@ function lobbyBody(v) {
   const seg = (m, t, d) => `<button class="segb${v.settings.mode === m ? ' on' : ''}" data-pa="mode" data-mode="${m}" role="radio" aria-checked="${v.settings.mode === m}" ${host ? '' : 'disabled'}><b>${t}</b><small>${d}</small></button>`;
   const setup = host ? `<h2 class="mid">Mode</h2><div class="seg" role="radiogroup" aria-label="Mode">${seg('classic', 'Classic', 'One secret word. The Odd Card sees only the category.')}${seg('grid', 'Grid', '16 words on a public grid. The secret word is one of them.')}</div>
     <h2 class="mid">Play to</h2><div class="stepper"><button data-pa="tminus" aria-label="Lower target" ${v.settings.target <= E.MIN_TARGET ? 'disabled' : ''}>−</button><output>${v.settings.target}</output><button data-pa="tplus" aria-label="Raise target" ${v.settings.target >= E.MAX_TARGET ? 'disabled' : ''}>+</button><span class="pill">points</span></div>`
-    : `<p class="note">${v.settings.mode === 'grid' ? 'Grid' : 'Classic'} mode · first to ${v.settings.target} points. Waiting for the Host to start.</p>`;
-  return `${stage('felt', `<span class="eyebrow">Lobby · Room</span><div class="roomcode">${esc(v.code)}</div>
+    : `<p class="note">${v.settings.mode === 'grid' ? 'Grid' : 'Classic'} mode, first to ${v.settings.target} points. Waiting for the Host to start.</p>`;
+  return `${stage('felt', `<span class="eyebrow">Room code</span><div class="roomcode">${esc(v.code)}</div>
     <button type="button" class="qr-tap" data-pa="qrfull" aria-label="Show the join QR code full screen">${qrSvg(link, `QR code to join room ${v.code}`)}</button>
     <div class="row2 qrbtns"><button class="mbtn" data-pa="qrfull">Full screen</button><button class="mbtn" data-pa="copy">Copy link</button></div>
     <p class="note linkline">${esc(link)}</p>`)}
@@ -185,12 +185,12 @@ function lobbyBody(v) {
 function passBody(v) {
   const g = v.game, readyN = g.ready.length, me = g.ready.includes(v.me.id);
   return (v.localPass ? localCard(v.localPass) : '') + cardSlot(v, v.localPass ? 'Your own card' : 'Your card')
-    + stage('spy', `<span class="eyebrow">Round ${g.round} · ${g.mode === 'grid' ? 'Grid' : 'Classic'}</span><p class="note">Press and hold the card, then let go to hide it. ${g.oddCount} Odd ${plural(g.oddCount, 'Card', 'Cards')} this round. ${readyN} of ${g.total} ready.</p>`) + (g.grid ? stage('felt', `<span class="eyebrow">${esc(g.category)}</span>${gridOf(g)}<p class="note">Everyone sees the grid. Word Holders know which word it is. The Odd Card doesn’t.</p>`) : '');
+    + stage('spy', `<span class="eyebrow">Round ${g.round}, ${g.mode === 'grid' ? 'grid' : 'classic'} mode</span><p class="note">Press and hold the card, then let go to hide it. ${g.oddCount} Odd ${plural(g.oddCount, 'Card', 'Cards')} this round. ${readyN} of ${g.total} ready.</p>`) + (g.grid ? stage('felt', `<span class="eyebrow">${esc(g.category)}</span>${gridOf(g)}<p class="note">Everyone sees the grid. Word Holders know which word it is. The Odd Card doesn’t.</p>`) : '');
 }
 
 function cluesBody(v) {
   const g = v.game, mine = g.speaker === v.me.id;
-  return cardSlot(v) + stage('teal', `<span class="eyebrow">Clues · lap ${g.lap} of 2</span><div class="big">${mine ? 'You’re up' : nm(v, g.speaker)}</div>
+  return cardSlot(v) + stage('teal', `<span class="eyebrow">Clues, lap ${g.lap} of 2</span><div class="big">${mine ? 'You’re up' : nm(v, g.speaker)}</div>
     <div class="lines"><p class="line"><b>${mine ? 'Say one word that hints at the secret word.' : `${nm(v, g.speaker)}, your clue.`}</b></p></div>
     <p class="note">Turn ${g.turn + 1} of ${g.turns}. Started with ${nm(v, g.start)}, going ${g.dir}${g.next ? `. Up next: ${nm(v, g.next)}` : '. Last clue, then the vote'}.</p>`)
     + gridBox(g, false);
@@ -207,7 +207,7 @@ function voteBody(v) {
 }
 
 function revealBody(v) {
-  const g = v.game, tally = Object.entries(g.tally || {}).sort((a, b) => b[1] - a[1]).map(([id, c]) => `${nm(v, id)} ${c}`).join(' · ');
+  const g = v.game, tally = Object.entries(g.tally || {}).sort((a, b) => b[1] - a[1]).map(([id, c]) => `${nm(v, id)} ${c}`).join(', ');
   const votes = tally ? `<p class="note"><b>Votes:</b> ${tally}.</p>` : '';
   if (g.accused === null) return stage('teal', `<span class="eyebrow">Reveal</span><div class="big">Tie</div><div class="lines"><p class="line"><b>No one is accused. Every Odd Card escapes.</b></p></div>${votes}`);
   return stage(g.accusedOdd ? 'felt' : 'red', `<span class="eyebrow">Reveal</span><div class="big">${nm(v, g.accused)}</div><p class="mid">${g.accusedOdd ? 'Odd Card' : 'Word Holder'}</p>${votes}`);
@@ -230,7 +230,7 @@ function flipBody(v) {
   const g = v.game, r = g.result;
   const odd = r.odd.map(id => nm(v, id)).join(' and ');
   const guess = r.guess ? ` ${nm(v, g.accused)} tapped <b>${esc(r.guess)}</b>.` : '';
-  return stage('felt', `<span class="eyebrow">Round ${g.round} · Result</span><div class="lines"><p class="line"><b>${esc(r.text)}</b></p></div>
+  return stage('felt', `<span class="eyebrow">Round ${g.round} result</span><div class="lines"><p class="line"><b>${esc(r.text)}</b></p></div>
     <p class="note">The Odd ${plural(r.odd.length, 'Card was', 'Cards were')} <b>${odd}</b>. The word was <b>${esc(r.word)}</b> (${esc(g.category)}).${guess}</p>`);
 }
 
@@ -242,7 +242,7 @@ function scoreBody(v) {
     <span class="pts"><span class="cnt">${g.scores[p.id]}</span>${r.delta[p.id] ? `<span class="gain">+${r.delta[p.id]}</span>` : ''}</span>
     <span class="track"><span class="fill" style="transform:scaleX(${g.scores[p.id] / top})"></span></span></div>`).join('');
   const tb = g.tiebreak ? `<p class="note"><b>Tiebreak round.</b> ${g.tiebreak.map(id => nm(v, id)).join(' and ')} are tied on top. Everyone still plays.</p>` : '';
-  return stage('felt', `<span class="eyebrow">Scoreboard · Round ${g.round}</span><p class="mid">${esc(r.text)}</p><p class="note">First to ${g.target} wins. Odd ${plural(r.odd.length, 'Card', 'Cards')}: <b>${r.odd.map(id => nm(v, id)).join(' and ')}</b>.</p>${tb}<div class="score">${rows}</div>`);
+  return stage('felt', `<span class="eyebrow">Scores after round ${g.round}</span><p class="mid">${esc(r.text)}</p><p class="note">First to ${g.target} wins. Odd ${plural(r.odd.length, 'Card', 'Cards')}: <b>${r.odd.map(id => nm(v, id)).join(' and ')}</b>.</p>${tb}<div class="score">${rows}</div>`);
 }
 
 function endedBody() { return stage('spy', `<span class="eyebrow">Room closed</span><h1 class="mid">The Host ended the game</h1><p class="note">Thanks for playing. Tap Home to leave.</p>`); }
@@ -296,7 +296,7 @@ export function overHTML(isFlat) {
     return `<div class="rv${leaders.includes(p.id) ? ' me' : ''}"><span class="nm">${esc(p.name)}</span><span class="tag ${odd ? 'black' : 'red'}">${odd ? 'Odd Card' : 'Word Holder'}${r.delta[p.id] ? ` +${r.delta[p.id]}` : ''}</span><span class="tot">${g.scores[p.id]}</span></div>`; }).join('');
   const confetti = isFlat ? '' : `<div class="confetti" aria-hidden="true">${Array.from({ length: 44 }, (_, i) => `<i style="--x:${Math.round(Math.random() * 100)}%;--col:${['#F5C542', '#E5383B', '#1FB6B0', '#FFF7E6'][i % 4]};--d:${(2.6 + Math.random() * 2).toFixed(2)}s;--dl:${(Math.random() * 2.5).toFixed(2)}s;--dx:${Math.round(Math.random() * 120 - 60)}px;--r:${Math.round(360 + Math.random() * 540)}deg"></i>`).join('')}</div>`;
   return `<div class="win ${oddWon ? 'spy' : 'agent'}" role="dialog" aria-modal="true" aria-label="Game over">${confetti}<div class="win-in">
-    <span class="eyebrow">Game over · round ${g.round}</span><h1 class="headline">${names} win${leaders.length > 1 ? '' : 's'}!</h1>
+    <span class="eyebrow">Game over after round ${g.round}</span><h1 class="headline">${names} win${leaders.length > 1 ? '' : 's'}!</h1>
     <p class="reason">${nm(v, leaders[0])} reached ${g.scores[leaders[0]]} points (target ${g.target}). ${esc(r.text)} The word was <b>${esc(r.word)}</b>.</p><div class="reveal">${rows}</div>
     ${isHost(v) ? '<button class="next" data-pa="again" style="margin-top:8px">Play again</button>' : '<p class="note">Waiting for the Host to start another game.</p>'}
     <button class="mbtn" data-pa="leave" style="justify-content:center">Leave room</button></div></div>`;
