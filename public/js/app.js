@@ -5,6 +5,14 @@ import { faqResults } from './faq.js';
 import { holdCard, holdEnd, initHold, ODD_TEXT } from './holdcard.js';
 import * as P from './phones.js';
 import * as Su from './setup.js';
+import { backClosesSheets } from './back-sheet.js';
+// Back (Android Back, the iOS edge swipe) closes the top sheet first, the same as a tap on its backdrop. The win and
+// round-over screens have no backdrop action, so Back leaves them alone.
+const backNav = backClosesSheets(() => {
+  const d = [...document.querySelectorAll('#sheets [aria-modal="true"]')].filter((x) => x.getClientRects().length).at(-1);
+  const scrim = d?.previousElementSibling?.matches('[data-act="close"], [data-su="closesheet"]') ? d.previousElementSibling : null;
+  return scrim ? { key: `${d.className}|${d.getAttribute('aria-label') || (d.querySelector('h2') || d).textContent.trim().slice(0, 40)}`, close: () => scrim.click() } : null;
+});
 
 const KEY = 'oddcard.v2';
 const OLD_KEY = 'oddcard.v1'; // earlier format (eyes-open night, physical deck): only the setup is carried over
@@ -262,6 +270,7 @@ function render() {
   document.body.classList.toggle('open', !!$sheets.firstChild);
   if (S.view === 'game' && G() && ['score', 'over'].includes(G().phase)) animateScore();
   wake();
+  backNav.sync();
 }
 
 // Phones mode re-renders on every update from the room; keep what the player is typing.
