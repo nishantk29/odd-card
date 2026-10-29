@@ -264,5 +264,4 @@ button.gw:active{background:var(--gold)}
 .wordcard strong{font-size:clamp(28px,min(14vw,calc(150cqi / var(--wl,6))),76px);overflow-wrap:normal}
 /* The Tie button keeps its dark fill on the gold vote stage (the stage's button tint was overriding it). */
 .stage .pbtn.tie{background:var(--ink);color:var(--gold)}
-/* Phones: the Deal button steps aside while a name field has focus, so it can't cover the field above the keyboard. */
-@media (pointer:coarse) and (max-width:1099px){html:has(main input:focus) main .dock{display:none}}
+/* (Polish #7's dock-hiding rule is not used here: in this app the dock holds Join and Next, which must stay reachable while typing.) */

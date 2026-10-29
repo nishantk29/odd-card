@@ -3,7 +3,7 @@
 // The preset that is preselected and marked "Recommended" (id from presets.js).
 export const DEFAULT_PRESET_ID = 'opening-hand';
 
-// Seating when nobody has joined on their own phone yet. 'one' keeps Pass the Phone as the zero-setup path (works offline).
+// Seating when nobody has joined on their own phone yet. 'one' keeps Pass the phone as the zero-setup path (works offline).
 export const DEFAULT_SEATING = 'one';
 
 // Where the room code and QR sit: on step 1 (Players) as approved, not on a step of their own.

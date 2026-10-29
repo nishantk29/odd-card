@@ -152,16 +152,16 @@ function entryHTML() {
   <div class="screen">${stage('felt', `<span class="eyebrow">Join a game</span><h1 class="mid">Join on your own phone</h1>
     <label class="fld"><span>Your name</span><input data-pin="name" value="${esc(P.name)}" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="Name"></label>
     <label class="fld"><span>Room code</span><input class="codein" data-pin="codeInput" value="${esc(P.codeInput)}" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDEF"></label>
-    ${err()}<button class="next gold-btn" data-pa="join" ${P.wait ? 'disabled' : ''}>Join Room</button>
-    <p class="note">The Host starts a room from New Game and shows the code and a QR.</p>`)}</div></main>`;
+    ${err()}<button class="next gold-btn" data-pa="join" ${P.wait ? 'disabled' : ''}>Join room</button>
+    <p class="note">The Host starts a room from New game and shows the code and a QR.</p>`)}</div></main>`;
 }
 
 function joinHTML() {
   if (P.gone) return `<main class="wrap"><div class="bar"><button class="iconbtn" data-pa="exit" aria-label="Home">${icons.back()}</button></div><div class="screen">${stage('red', `<span class="eyebrow">Room ${esc(P.code)}</span><h1 class="mid">Room not found</h1>${err()}<p class="note">The Host may have ended the game, or the code is wrong.</p>`)}</div></main>`;
   return `<main class="wrap"><div class="bar"><button class="iconbtn" data-pa="exit" aria-label="Home">${icons.back()}</button><span class="grow"></span><button class="iconbtn" data-act="faq" aria-label="Rules and FAQ">?</button></div>
-  <div class="screen">${stage('felt', `<span class="eyebrow">Join Room</span><div class="roomcode">${esc(P.code)}</div>
+  <div class="screen">${stage('felt', `<span class="eyebrow">Join room</span><div class="roomcode">${esc(P.code)}</div>
     <label class="fld"><span>Your name</span><input data-pin="name" value="${esc(P.name)}" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="Name"></label>${err()}`)}</div>
-  <div class="dock">${next('Join Room', 'join', { dis: P.wait })}</div></main>`;
+  <div class="dock">${next('Join room', 'join', { dis: P.wait })}</div></main>`;
 }
 
 const err = () => (P.err ? `<p class="perr" role="alert">${esc(P.err)}</p>` : '');
@@ -176,7 +176,7 @@ function lobbyBody(v) {
     : `<p class="note">${v.settings.mode === 'grid' ? 'Grid' : 'Classic'} mode · first to ${v.settings.target} points. Waiting for the Host to start.</p>`;
   return `${stage('felt', `<span class="eyebrow">Lobby · Room</span><div class="roomcode">${esc(v.code)}</div>
     <button type="button" class="qr-tap" data-pa="qrfull" aria-label="Show the join QR code full screen">${qrSvg(link, `QR code to join room ${v.code}`)}</button>
-    <div class="row2 qrbtns"><button class="mbtn" data-pa="qrfull">Full Screen</button><button class="mbtn" data-pa="copy">Copy Link</button></div>
+    <div class="row2 qrbtns"><button class="mbtn" data-pa="qrfull">Full screen</button><button class="mbtn" data-pa="copy">Copy link</button></div>
     <p class="note linkline">${esc(link)}</p>`)}
   ${stage('spy', `<span class="eyebrow">${n} of ${E.MAX_PLAYERS} players</span><div class="plist">${rows}</div>${host && need > 0 ? `<p class="note">Need ${MIN_PLAYERS} players to start. ${need} more to go.</p>` : ''}`)}
   ${stage('felt', setup)}`;
@@ -254,22 +254,22 @@ function dockFor(v) {
     case 'pass': {
       const ready = g.ready.includes(id);
       if (host && v.localPass) return next('Done, Pass On', 'localReady', { dis: !P.revealedLocal });
-      if (host) return next('Start Clues', 'begin', { dis: !P.revealed && !ready });
-      return next(ready ? 'Waiting for Others' : 'Got It', 'ready', { dis: ready || !P.revealed });
+      if (host) return next('Start clues', 'begin', { dis: !P.revealed && !ready });
+      return next(ready ? 'Waiting for others' : 'Got it', 'ready', { dis: ready || !P.revealed });
     }
-    case 'clues': return g.speaker === id || host ? next(g.turn === g.turns - 1 ? 'Go to Vote' : g.speaker === id ? 'Done, Next Player' : 'Next Player', 'clueDone') : '';
-    case 'vote': return host ? next('Close Vote', 'closeVote', { cls: 'teal', dis: g.voted.length === 0 }) : '';
+    case 'clues': return g.speaker === id || host ? next(g.turn === g.turns - 1 ? 'Go to vote' : g.speaker === id ? 'Done, next player' : 'Next player', 'clueDone') : '';
+    case 'vote': return host ? next('Close vote', 'closeVote', { cls: 'teal', dis: g.voted.length === 0 }) : '';
     case 'reveal': return host ? next(g.accusedOdd ? 'Odd Card Guesses' : 'Next', 'next') : '';
     case 'guess': return host ? (g.grid ? `<button class="next red" data-pa="judge" data-right="0">Skip Guess (Wrong)</button>` : `<div class="row2"><button class="next teal" data-pa="judge" data-right="1">Right</button><button class="next red" data-pa="judge" data-right="0">Wrong</button></div>`) : '';
     case 'flip': return host ? next('Show Scores', 'next') : '';
-    case 'score': return host ? next(g.win.status === 'win' ? 'See the Winner' : g.win.status === 'tie' ? 'Tiebreak Round' : 'Next Round', 'next') : '';
+    case 'score': return host ? next(g.win.status === 'win' ? 'See the Winner' : g.win.status === 'tie' ? 'Tiebreak Round' : 'Next round', 'next') : '';
     default: return '';
   }
 }
 
 export function html() {
   if (P.step === 'entry') return entryHTML();
-  if (!P.view) return P.step === 'room' ? `<main class="wrap"><div class="screen">${stage('spy', `<span class="eyebrow">Room ${esc(P.code)}</span><h1 class="mid">${P.conn ? 'Joining…' : 'Connecting…'}</h1>${err()}`)}</div><div class="dock"><button class="mbtn" data-pa="leave" style="justify-content:center">Leave Room</button></div></main>` : joinHTML();
+  if (!P.view) return P.step === 'room' ? `<main class="wrap"><div class="screen">${stage('spy', `<span class="eyebrow">Room ${esc(P.code)}</span><h1 class="mid">${P.conn ? 'Joining…' : 'Connecting…'}</h1>${err()}`)}</div><div class="dock"><button class="mbtn" data-pa="leave" style="justify-content:center">Leave room</button></div></main>` : joinHTML();
   const v = P.view, g = v.game;
   const body = { lobby: lobbyBody, pass: passBody, clues: cluesBody, vote: voteBody, reveal: revealBody, guess: guessBody, flip: flipBody, score: scoreBody, over: scoreBody, ended: endedBody }[v.phase]?.(v) || '';
   const dock = v.phase === 'ended' ? `<button class="next" data-pa="leave">Home</button>` : dockFor(v);
@@ -279,9 +279,9 @@ export function html() {
 
 export function menuSheet() {
   const v = P?.view, host = v && isHost(v) && v.phase !== 'ended';
-  const conf = P.confirmEnd ? `<div class="confirm"><p>End the game for everyone? Scores will be lost.</p><div class="row2"><button class="mbtn danger" data-pa="endYes">Yes, End Game</button><button class="mbtn" data-pa="endNo">Cancel</button></div></div>` : '';
+  const conf = P.confirmEnd ? `<div class="confirm"><p>End the game for everyone? Scores will be lost.</p><div class="row2"><button class="mbtn danger" data-pa="endYes">Yes, end game</button><button class="mbtn" data-pa="endNo">Cancel</button></div></div>` : '';
   return `<h2>Menu</h2><div class="menu"><button class="mbtn" data-act="faq">Rules &amp; FAQ</button><button class="mbtn" data-act="settings">Settings</button>
-    ${host ? '<button class="mbtn danger" data-pa="endAsk">End Game</button>' : ''}<button class="mbtn" data-pa="leave">Leave Room</button></div>${conf}
+    ${host ? '<button class="mbtn danger" data-pa="endAsk">End game</button>' : ''}<button class="mbtn" data-pa="leave">Leave room</button></div>${conf}
     <button class="mbtn" style="margin-top:14px;justify-content:center" data-act="close">Close</button>`;
 }
 
@@ -298,8 +298,8 @@ export function overHTML(isFlat) {
   return `<div class="win ${oddWon ? 'spy' : 'agent'}" role="dialog" aria-modal="true" aria-label="Game over">${confetti}<div class="win-in">
     <span class="eyebrow">Game over · round ${g.round}</span><h1 class="headline">${names} win${leaders.length > 1 ? '' : 's'}!</h1>
     <p class="reason">${nm(v, leaders[0])} reached ${g.scores[leaders[0]]} points (target ${g.target}). ${esc(r.text)} The word was <b>${esc(r.word)}</b>.</p><div class="reveal">${rows}</div>
-    ${isHost(v) ? '<button class="next" data-pa="again" style="margin-top:8px">Play Again</button>' : '<p class="note">Waiting for the Host to start another game.</p>'}
-    <button class="mbtn" data-pa="leave" style="justify-content:center">Leave Room</button></div></div>`;
+    ${isHost(v) ? '<button class="next" data-pa="again" style="margin-top:8px">Play again</button>' : '<p class="note">Waiting for the Host to start another game.</p>'}
+    <button class="mbtn" data-pa="leave" style="justify-content:center">Leave room</button></div></div>`;
 }
 
 // ---- QR: Fullscreen API with a full-viewport overlay fallback (iPhone Safari) --------
