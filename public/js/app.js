@@ -235,6 +235,15 @@ function sheetsHTML() {
 }
 
 // ---- render ------------------------------------------------------------
+// Entrances play once per mount: the same stage, sheet, scrim or win screen (same classes, same label) keeps still.
+const ENTER_SEL = '.stage, .scrim, .sheet, .win, .headline, .srow .gain, .scrim2, .su-sheet';
+const enterKey = (el) => `${el.parentElement === $sheets ? 's' : 'a'}|${el.className.replace(/\bis-settled\b/, '').trim()}|${el.getAttribute('aria-label') || ''}|${el.matches('.headline, .srow .gain') ? el.textContent.trim().slice(0, 40) : el.matches('.stage') ? (el.querySelector('h1, h2, h3')?.textContent || '').trim().slice(0, 40) : ''}`;
+const enterKeys = () => new Set([...$app.querySelectorAll(ENTER_SEL), ...$sheets.querySelectorAll(ENTER_SEL)].map(enterKey));
+function settle(before) {
+  if (!before.size) return;
+  for (const el of [...$app.querySelectorAll(ENTER_SEL), ...$sheets.querySelectorAll(ENTER_SEL)]) if (before.has(enterKey(el))) el.classList.add('is-settled');
+}
+
 function render() {
   if (P.active() && P.busy()) { P.defer(); return; } // a card is showing under a finger: update when it's let go
   holdEnd();
@@ -244,8 +253,10 @@ function render() {
   const inSetup = !active && S.view === 'setup';
   document.body.classList.toggle('v2', inSetup);
   if (inSetup) Su.captureFocus();
+  const shown = enterKeys(); // entrances already on screen do not replay on this repaint (Phones mode repaints on every room update)
   $app.innerHTML = active ? P.html() : inSetup ? Su.html() : S.view === 'game' && G() ? gameHTML() : homeHTML();
   $sheets.innerHTML = sheetsHTML();
+  settle(shown);
   restoreFocus(kept);
   if (inSetup) Su.afterRender();
   document.body.classList.toggle('open', !!$sheets.firstChild);

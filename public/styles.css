@@ -48,13 +48,13 @@ button:focus-visible,input:focus-visible{outline:4px solid var(--ivory);outline-
 .screen{flex:1;display:flex;flex-direction:column;gap:14px;min-height:0}
 .stack3{position:relative;margin-bottom:var(--s3)}
 .stage{--c:var(--felt);--k:var(--ivory);position:relative;border-radius:22px;padding:var(--s5) 20px 28px;background:var(--c);color:var(--k);
-  animation:popin .45s cubic-bezier(.2,.8,.2,1) both;transform-origin:50% 100%}
+  animation:popin .18s cubic-bezier(.2,.8,.2,1) both;transform-origin:50% 100%}
 .stage.felt{--c:var(--felt)}
 .stage.spy{--c:var(--spy);--k:var(--ivory)}
 .stage.teal{--c:var(--teal);--k:var(--ink)}
 .stage.gold{--c:var(--gold);--k:var(--ink)}
 .stage.red{--c:var(--red-deep);--k:var(--ivory)}
-@keyframes popin{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes popin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .eyebrow{display:block;font-weight:700;font-size:16px;opacity:.85}
 .big{font-size:clamp(40px,12vw,64px);font-weight:900;letter-spacing:-.03em;line-height:1;margin-top:14px;overflow-wrap:anywhere}
 .mid{font-size:clamp(26px,8vw,36px);font-weight:900;letter-spacing:-.02em;line-height:1.05;margin-top:12px}
@@ -98,17 +98,17 @@ button:focus-visible,input:focus-visible{outline:4px solid var(--ivory);outline-
 .srow .nm .nt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .srow .nm span:not(.nt){flex:none;display:inline-block;margin-left:6px;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:800;background:var(--spy);color:var(--gold)}
 .srow .pts{font-size:34px;font-weight:900;letter-spacing:-.03em;line-height:1;text-align:right;min-width:2ch;display:flex;align-items:center;gap:8px;justify-content:flex-end}
-.srow .gain{font-size:16px;font-weight:900;padding:3px 9px;border-radius:99px;background:var(--gold);color:var(--ink);animation:pop 400ms var(--ease-pop) .5s both}
+.srow .gain{font-size:16px;font-weight:900;padding:3px 9px;border-radius:99px;background:var(--gold);color:var(--ink);animation:pop 180ms var(--ease-pop) .3s both}
 .srow .track{grid-column:1/3;height:8px;border-radius:9px;background:rgba(0,0,0,.3);overflow:hidden}
 .srow .fill{height:100%;width:100%;border-radius:9px;background:var(--gold);transform-origin:0 50%;transition:transform .9s cubic-bezier(.2,.8,.2,1)}
 @keyframes pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
 
 /* sheets: opaque panels */
-.scrim{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:10;animation:fade .25s both}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:10;animation:fade .18s both}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .sheet{--solid:#0A5A38;position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;max-height:92dvh;display:flex;flex-direction:column;z-index:11;color:var(--ivory);
-  padding:6px 20px calc(20px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;background:var(--solid);box-shadow:0 120px 0 var(--solid);animation:rise .3s var(--ease-pop) both}
-@keyframes rise{from{transform:translateY(60%);opacity:0}to{transform:none;opacity:1}}
+  padding:6px 20px calc(20px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;background:var(--solid);box-shadow:0 120px 0 var(--solid);animation:rise .18s var(--ease-pop) both}
+@keyframes rise{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
 .sheet.s-spy{--solid:#17171c}
 .sheet .grab{display:block;width:100%;height:30px}
 .sheet .grab span{display:block;width:54px;height:7px;border-radius:9px;margin:10px auto 0;background:rgba(255,255,255,.7)}
@@ -164,12 +164,12 @@ mark{background:var(--gold);color:var(--ink);border-radius:4px;padding:0 2px}
 .addbtn + .mid{margin-top:var(--s6)}
 
 /* win */
-.win{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;--solid:#0A5A38;--k:var(--ivory);background:var(--solid);color:var(--k);animation:fade .4s both}
+.win{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;--solid:#0A5A38;--k:var(--ivory);background:var(--solid);color:var(--k);animation:fade .18s both}
 .win.spy{--solid:#17171c}
 .win.agent .headline{color:var(--gold)}
 .win.spy .headline{color:var(--red)}
 .win-in{position:relative;z-index:2;max-width:560px;width:100%;margin:0 auto;max-height:100dvh;overflow-y:auto;padding:max(28px,env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
-.headline{font-size:clamp(44px,14vw,72px);font-weight:900;letter-spacing:-.035em;line-height:.98;animation:pop .4s var(--ease-pop) both}
+.headline{font-size:clamp(44px,14vw,72px);font-weight:900;letter-spacing:-.035em;line-height:.98;animation:pop .18s var(--ease-pop) both}
 .reason{font-size:19px;font-weight:600;line-height:1.35}
 .reveal{display:grid;gap:8px;margin-top:6px}
 .rv{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,.3);font-weight:800;font-size:17px}
@@ -180,11 +180,13 @@ mark{background:var(--gold);color:var(--ink);border-radius:4px;padding:0 2px}
 .rv .tot{font-size:26px;font-weight:900}
 .rv.me{box-shadow:0 0 0 3px var(--gold)}
 .confetti{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
-.confetti i{position:absolute;top:-24px;left:var(--x);width:10px;height:16px;border-radius:3px;background:var(--col);opacity:0;animation:fall var(--d) linear var(--dl) infinite}
+.confetti i{position:absolute;top:-24px;left:var(--x);width:10px;height:16px;border-radius:3px;background:var(--col);opacity:0;animation:fall var(--d) linear var(--dl) 1 both}
 @keyframes fall{0%{opacity:1;transform:translate3d(0,0,0) rotate(0)}100%{opacity:1;transform:translate3d(var(--dx),110dvh,0) rotate(var(--r))}}
 
 /* flat: reduced motion, low-end, host toggle */
 html.flat *,html.flat *::before,html.flat *::after{animation:none!important;transition:none!important}
+/* an entrance already on screen before a repaint does not replay */
+.is-settled{animation:none!important}
 html.flat .tile,html.flat .wordcard,html.flat .stage{transform:none!important}
 html.flat .confetti{display:none}
 @media (prefers-reduced-motion:reduce){
