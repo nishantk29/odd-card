@@ -213,7 +213,7 @@ function winPopup() {
   }).join('');
   const confetti = isFlat() ? '' : `<div class="confetti" aria-hidden="true">${Array.from({ length: 44 }, (_, i) => {
     const col = ['#F5C542', '#E5383B', '#1FB6B0', '#FFF7E6'][i % 4];
-    return `<i style="--x:${Math.round(Math.random() * 100)}%;--col:${col};--d:${(2.6 + Math.random() * 2).toFixed(2)}s;--dl:${(Math.random() * 2.5).toFixed(2)}s;--dx:${Math.round(Math.random() * 120 - 60)}px;--r:${Math.round(360 + Math.random() * 540)}deg"></i>`;
+    return `<i style="--x:${Math.round(Math.random() * 100)}%;--col:${col};--d:${(0.3 + Math.random() * 0.06).toFixed(2)}s;--dl:${(Math.random() * 0.04).toFixed(2)}s;--dx:${Math.round(Math.random() * 120 - 60)}px;--r:${Math.round(360 + Math.random() * 540)}deg"></i>`;
   }).join('')}</div>`;
   return `<div class="win ${spyWon ? 'spy' : 'agent'}" role="dialog" aria-modal="true" aria-label="Game over">${confetti}<div class="win-in">
     <span class="eyebrow">Game over after round ${r.no}</span>
@@ -290,12 +290,12 @@ function animateScore() {
     fills.forEach(f => { f.style.transition = ''; f.style.transform = `scaleX(${f.dataset.to})`; });
     const t0 = performance.now();
     const step = now => {
-      const k = Math.min(1, (now - t0) / 900);
+      const k = Math.min(1, (now - t0) / 400);
       cnts.forEach(c => (c.textContent = Math.round(+c.dataset.from + (+c.dataset.to - +c.dataset.from) * k)));
       if (k < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
-    setTimeout(() => cnts.forEach(c => (c.textContent = c.dataset.to)), 1000);
+    setTimeout(() => cnts.forEach(c => (c.textContent = c.dataset.to)), 450);
   });
 }
 
