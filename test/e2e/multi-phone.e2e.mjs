@@ -209,7 +209,11 @@ for (const [name, dev] of [['375', 'p375'], ['1280', 'd1280']]) {
   L.check('mixed: host still sees their own card', /Category:/.test(await holdRead(h, 'me')));
   const hh = await html(h);
   L.check('mixed: host DOM holds no secret after the pass', !seen.some((t) => !t.includes(ODD) && hh.includes(wordOf(t))) && !hh.includes(ODD));
-  for (const g of gs) { await holdRead(g); await g.page.click('.dock [data-pa="ready"]'); }
+  // Live rooms: the card can arrive a moment after the screen, so hold again until Got it unlocks (max 5 holds).
+  for (const g of gs) {
+    for (let t = 0; t < 5 && !(await g.page.locator('.dock [data-pa="ready"]:not([disabled])').count()); t++) { await holdRead(g); await sleep(300); }
+    await g.page.click('.dock [data-pa="ready"]');
+  }
   await h.page.click('.dock [data-pa="begin"]');
   L.check('mixed: clues start once everyone has looked', await waitPhase(h, 'clues'));
   await checkPhones(L, [h, ...gs], 'mixed');
