@@ -1,5 +1,5 @@
 // Copy gate (Nishant 2026-10-28: "Make sure the text is checked to avoid AI wording"). Shared lint vendored in test/kit/copy-lint.mjs.
-// Scans the FAQ, the host script and every .js/.html file the site ships (tags stripped).
+// Scans the FAQ, the outcome text and every .js/.html file the site ships (tags stripped).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import path from 'node:path';
@@ -10,9 +10,9 @@ import * as E from '../public/js/engine.js';
 const pub = new URL('../public/', import.meta.url).pathname;
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? (['fonts', 'icons'].includes(e.name) ? [] : walk(path.join(d, e.name))) : [path.join(d, e.name)]));
 
-test('copy lint: FAQ and host script have no AI wording', () => {
-  const script = [...E.NIGHT.flatMap((x) => x.lines.map((l) => l.text)), E.VOTE_CUE, E.GESTURE_NOT_SPY, E.GESTURE_CAUGHT, E.GESTURE_RIGHT, E.GESTURE_WRONG, ...Object.values(E.OUTCOME_TEXT).map(String)];
-  const strings = [...FAQ.flatMap((f) => [f.q, f.a]), ...script];
+test('copy lint: FAQ and outcome text have no AI wording', () => {
+  const script = Object.values(E.OUTCOME_TEXT).map(String);
+  const strings = [...FAQ.flatMap((f) => [f.q, f.a, ...(f.steps || []), ...(f.list || [])]), ...script];
   const hits = strings.flatMap((s) => lintCopy(String(s)).map((i) => `${i} in "${String(s).slice(0, 50)}"`));
   assert.deepEqual(hits, []);
 });

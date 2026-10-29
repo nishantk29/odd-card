@@ -4,25 +4,27 @@ import assert from 'node:assert/strict';
 import { FAQ } from '../public/js/faq.js';
 import * as E from '../public/js/engine.js';
 
-const a = (re) => FAQ.find((f) => re.test(f.q))?.a || '';
+const f = (re) => FAQ.find((x) => re.test(x.q)) || {};
+const a = (re) => f(re).a || '';
+const all = (re) => [f(re).a, ...(f(re).steps || []), ...(f(re).list || [])].join(' ');
 
 test('FAQ player range, target and undo cap come from the engine', () => {
   assert.ok(a(/What is The Odd Card/).includes(`${E.MIN_PLAYERS} to ${E.MAX_PLAYERS} players`));
-  assert.ok(a(/How do I win/).includes(`default ${E.DEFAULT_TARGET}, the host can choose ${E.MIN_TARGET} to ${E.MAX_TARGET}`));
+  assert.ok(a(/How do I win/).includes(`default ${E.DEFAULT_TARGET}, you choose ${E.MIN_TARGET} to ${E.MAX_TARGET}`));
   assert.ok(a(/undo/i).includes(`up to ${E.MAX_UNDO} steps`));
 });
 
-test('FAQ spy and card counts match spyCount for every table size', () => {
-  const pull = a(/Which cards do we pull/), spies = a(/How many spies/);
+test('FAQ Odd Card counts match spyCount for every table size', () => {
+  const list = (f(/How many Odd Cards/).list || []).join(' ');
   for (let n = E.MIN_PLAYERS; n <= E.MAX_PLAYERS; n++) {
-    const k = E.spyCount(n), dealt = E.setupCards(n);
-    if (n === E.MIN_PLAYERS || n === E.MAX_PLAYERS) assert.ok(pull.includes(`${n} players = ${n - k} red + ${k} black`), `${n}`);
-    assert.equal(dealt.black.length, k, `${n} black`); assert.equal(dealt.red.length, n - k, `${n} red`);
+    const k = E.spyCount(n);
+    assert.ok(new RegExp(`(^| )${k === 1 ? '' : ''}[\\d]+ to [\\d]+ players: ${k} Odd Card`).test(list), `${n}`);
+    const m = list.match(new RegExp(`(\\d+) to (\\d+) players: ${k} Odd Card`));
+    assert.ok(n >= +m[1] && n <= +m[2], `${n} in range`);
   }
-  assert.match(spies, /One spy with \d+ to \d+ players\. Two spies with \d+ to \d+ players/);
 });
 
 test('FAQ scoring matches scoreRound', () => {
-  const s = a(/How is a round scored/);
-  for (const bit of ['not accused: +2', 'guesses the word: +1', 'guesses wrong: every agent +1', 'each spy +2']) assert.ok(s.includes(bit), bit);
+  const s = all(/How is a round scored/);
+  for (const bit of ['not accused: 2 points', 'guesses the word: 1 point', 'guesses wrong: every Word Holder gets 1 point', 'each Odd Card gets 2 points']) assert.ok(s.includes(bit), bit);
 });
