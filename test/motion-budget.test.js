@@ -46,3 +46,31 @@ test('the scans catch violations (verified red)', () => {
   assert.ok(mb.pressProblems(src(props + '.r:active{transition-duration:var(--f-press);transform:scale(.97)}'), { rowSelectors: ['.r'] }).length);
   assert.deepEqual(mb.pressProblems(src(props + '.b:active{transition-duration:var(--f-press);transform:scale(var(--f-press-scale))}')), []);
 });
+
+test('--dur-scale is gone everywhere (public/, src/, sw.js, pwa-install.js)', () => {
+  assert.deepEqual(mb.durScaleUses(fileURLToPath(new URL('..', import.meta.url))), []);
+});
+
+test('every animation plays once: no infinite or repeating animation in CSS or JS', () => {
+  assert.deepEqual(mb.loops(mb.cssSources(pub), pub), []);
+});
+
+test('motion is transform and opacity only (keyframes and transitions)', () => {
+  assert.deepEqual(mb.nonCompositor(mb.cssSources(pub)), []);
+});
+
+test('reduced motion is respected: there is a prefers-reduced-motion: reduce block', () => {
+  assert.ok(mb.cssSources(pub).some(({ css }) => /prefers-reduced-motion:\s*reduce/.test(css)));
+});
+
+test('the new scans catch violations (verified red)', () => {
+  const src = (css) => [{ file: 'x.css', css }];
+  assert.equal(mb.loops(src('.a{animation:x 300ms infinite}'), pub).length, 1);
+  assert.equal(mb.loops(src('.a{animation-iteration-count:3}'), pub).length, 1);
+  assert.equal(mb.loops(src('.a{animation:x 300ms ease 1 both}'), pub).length, 0);
+  assert.equal(mb.nonCompositor(src('@keyframes k{from{height:0}to{height:10px}}')).length, 1);
+  assert.equal(mb.nonCompositor(src('.a{transition:background-color 120ms,transform 120ms}')).length, 1);
+  assert.equal(mb.nonCompositor(src('.a{transition:all 120ms}')).length, 1);
+  assert.equal(mb.nonCompositor(src('.a{transition:transform 120ms,opacity 120ms}')).length, 0);
+  assert.equal(mb.timings(src('.a{transition:opacity 401ms}')).rows.filter((r) => r.ms > mb.CAP).length, 1);
+});
