@@ -3,7 +3,7 @@
 // - Navigations: network-first, falling back to the cached app shell.
 // - /api/* and /ws/* never touch the cache.
 // VERSION is a content hash of every precached file, so it changes whenever a file does.
-const VERSION = '6e6309fc59';
+const VERSION = '142221cdf5';
 const PREFIX = 'odd-card-';
 const CACHE = PREFIX + VERSION;
 
@@ -20,6 +20,7 @@ const PRECACHE = [
   '/icons/icon-maskable-512.png',
   '/js/app.js',
   '/js/art.js',
+  '/js/back-sheet.js',
   '/js/config-defaults.js',
   '/js/engine.js',
   '/js/faq.js',
