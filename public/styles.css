@@ -257,3 +257,12 @@ button.gw:active{background:var(--gold)}
 #qrfs .qr{display:block;width:min(88vw,70vh);height:auto}
 #qrfs .qr-code{margin:0;font-weight:900;font-size:clamp(2rem,10vw,3.5rem);line-height:1;letter-spacing:.2em;text-indent:.2em}
 #qrfs .qr-hint{margin:0;font-weight:600;font-size:16px;color:#5a4a3a}
+@media (max-width:360px){.next{font-size:28px}.chip{width:54px;height:78px}}
+/* Polish sweep (Oct 28). The word card scales with its longest word (--wl, set in app.js), so "Thanksgiving" stays whole on one
+   line on a phone; short words keep the same size as before. */
+.wordcard{container-type:inline-size}
+.wordcard strong{font-size:clamp(28px,min(14vw,calc(150cqi / var(--wl,6))),76px);overflow-wrap:normal}
+/* The Tie button keeps its dark fill on the gold vote stage (the stage's button tint was overriding it). */
+.stage .pbtn.tie{background:var(--ink);color:var(--gold)}
+/* Phones: the Deal button steps aside while a name field has focus, so it can't cover the field above the keyboard. */
+@media (pointer:coarse) and (max-width:1099px){html:has(main input:focus) main .dock{display:none}}
