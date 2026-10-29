@@ -64,14 +64,14 @@ const gridBox = g => (g.round.mode === 'grid' ? `<details class="gridbox" data-g
 function homeHTML() {
   const g = G();
   const lastRoom = P.lastRoom();
-  const rejoin = lastRoom ? `<button class="tile t-spy" data-act="rejoin"><h2>Rejoin Room</h2><p>Room ${esc(lastRoom)}</p>${icons.go()}</button>` : '';
-  const resume = g && g.phase !== 'over' ? `<button class="tile t-spy" data-act="resume"><h2>Resume Game</h2><p>Round ${g.round.no} · ${g.names.length} players</p>${icons.go()}</button>` : '';
+  const rejoin = lastRoom ? `<button class="tile t-spy" data-act="rejoin"><h2>Rejoin room</h2><p>Room ${esc(lastRoom)}</p>${icons.go()}</button>` : '';
+  const resume = g && g.phase !== 'over' ? `<button class="tile t-spy" data-act="resume"><h2>Resume game</h2><p>Round ${g.round.no}, ${g.names.length} players</p>${icons.go()}</button>` : '';
   return `<main class="wrap home"><header>${titleArt()}<h1>The Odd Card</h1><p class="sub">A word game with one player out of the loop.</p></header>
   <div class="stack">
     <button class="tile t-gold" data-act="play"><h2>New game</h2><p>Own phones, one phone passed around, or both</p>${icons.go()}</button>
     <button class="tile t-teal" data-act="phones"><h2>Join a game</h2><p>Type a room code or scan the QR</p>${icons.go()}</button>${rejoin}${resume}
     <button class="rulescard" data-act="faq"><span class="rc-t"><b>Rules &amp; FAQ</b><small>Setup, modes, Phones mode and scoring.</small></span>${oddIcon()}</button>
-    <section class="how"><h2>How to Play</h2><ol aria-label="How to Play, 4 steps">
+    <section class="how"><h2>How to play</h2><ol aria-label="How to play, 4 steps">
       <li><b>Deal.</b> Each player secretly looks at their card, on one passed phone or on their own.</li>
       <li><b>Clues.</b> Two laps: one hint word each. Don’t give the word away.</li>
       <li><b>Vote.</b> On three, point at the Odd Card. The accused Odd Card gets one guess at the word.</li>
@@ -84,35 +84,35 @@ function dealBody(g) {
   const r = g.round;
   const tb = g.tiebreak ? `<p class="note"><b>Tiebreak round.</b> ${g.tiebreak.map(i => nameOf(i)).join(' and ')} are tied on top. Everyone still plays.</p>` : '';
   const k = r.spyCount;
-  return stage('felt', `<span class="eyebrow">Round ${r.no} · ${r.mode === 'grid' ? 'Grid' : 'Classic'}</span>${tb}
+  return stage('felt', `<span class="eyebrow">Round ${r.no}, ${r.mode === 'grid' ? 'grid' : 'classic'} mode</span>${tb}
     <h1 class="mid">Pass the phone around the table</h1>
     <ol class="steps"><li>Each player gets a secret card. The phone says who is next.</li>
     <li>Press and hold the card to look. Let go to hide it.</li>
-    <li>${g.names.length} players · ${k} Odd ${plural(k, 'Card', 'Cards')}. ${r.mode === 'grid' ? 'After the last player, the 16-word grid appears for everyone.' : 'The Odd Card sees only the category.'}</li></ol>`);
+    <li>${g.names.length} players, ${k} Odd ${plural(k, 'Card', 'Cards')}. ${r.mode === 'grid' ? 'After the last player, the 16-word grid appears for everyone.' : 'The Odd Card sees only the category.'}</li></ol>`);
 }
 
 function passBody(g) {
   const r = g.round;
-  return `<div class="cardslot"><p class="cardfor">Pass the phone to <b>${nameOf(r.pass)}</b> · ${r.pass + 1} of ${g.names.length}</p>${holdCard('pass')}</div>`
+  return `<div class="cardslot"><p class="cardfor">Pass the phone to <b>${nameOf(r.pass)}</b> (${r.pass + 1} of ${g.names.length})</p>${holdCard('pass')}</div>`
     + stage('spy', `<p class="note">Only ${nameOf(r.pass)} looks. Press and hold the card, then let go to hide it.</p>`);
 }
 
 function gridBody(g) {
   const r = g.round;
-  return stage('felt', `<span class="eyebrow">Round ${r.no} · Grid</span><h1 class="mid">${esc(r.category)}</h1>${lines(E.cueFor(g))}${wordGrid(g)}
+  return stage('felt', `<span class="eyebrow">Round ${r.no}, grid mode</span><h1 class="mid">${esc(r.category)}</h1>${lines(E.cueFor(g))}${wordGrid(g)}
     <p class="note">Everyone can see the grid. Word Holders know which word it is. The Odd Card doesn’t.</p>`);
 }
 
 function cluesBody(g) {
   const r = g.round, n = g.names.length, seat = E.clueSeat(r, n, r.turn);
   const lap = r.turn < n ? 1 : 2;
-  return stage('teal', `<span class="eyebrow">Clues · lap ${lap} of 2</span><div class="big">${nameOf(seat)}</div>${lines(E.cueFor(g))}
+  return stage('teal', `<span class="eyebrow">Clues, lap ${lap} of 2</span><div class="big">${nameOf(seat)}</div>${lines(E.cueFor(g))}
     <p class="note">One word that hints at the secret word, without giving it away. Turn ${r.turn + 1} of ${2 * n}. Started with ${nameOf(r.start)}, going ${E.dirName(r.dir)}${r.turn < 2 * n - 1 ? `. Up next: ${nameOf(E.clueSeat(r, n, r.turn + 1))}` : '. Last clue, then the vote'}.</p>${gridBox(g)}`);
 }
 
 function voteBody(g) {
   return stage('gold', `<span class="eyebrow">Vote</span>${lines(E.cueFor(g))}<p class="note"><b>Host:</b> tap the player with the most fingers pointing at them.</p>
-    <div class="players">${g.names.map((n, i) => `<button class="pbtn" data-act="vote" data-seat="${i}">${esc(n)}</button>`).join('')}<button class="pbtn tie" data-act="vote" data-seat="tie">Tie · no clear winner</button></div>`);
+    <div class="players">${g.names.map((n, i) => `<button class="pbtn" data-act="vote" data-seat="${i}">${esc(n)}</button>`).join('')}<button class="pbtn tie" data-act="vote" data-seat="tie">Tie (no clear winner)</button></div>`);
 }
 
 function revealBody(g) {
@@ -133,7 +133,7 @@ function guessBody(g) {
 function flipBody(g) {
   const r = g.round;
   const guess = r.mode === 'grid' && r.guess ? ` ${nameOf(r.accused)} tapped <b>${esc(r.guess)}</b>.` : '';
-  return stage('felt', `<span class="eyebrow">Round ${r.no} · Result</span>${lines(E.cueFor(g))}
+  return stage('felt', `<span class="eyebrow">Round ${r.no} result</span>${lines(E.cueFor(g))}
     <p class="note">The Odd ${plural(r.spies.length, 'Card was', 'Cards were')} <b>${spiesText(g)}</b>. The word was <b>${esc(r.word)}</b> (${esc(r.category)}).${guess}</p>`);
 }
 
@@ -145,7 +145,7 @@ function scoreBody(g) {
   const rows = order.map(i => `<div class="srow"><span class="nm"><span class="nt">${esc(g.names[i])}</span>${r.spies.includes(i) ? '<span>Odd Card</span>' : ''}</span>
     <span class="pts"><span class="cnt" data-i="${i}" data-from="${prev[i]}" data-to="${g.scores[i]}">${g.scores[i]}</span>${r.delta[i] ? `<span class="gain">+${r.delta[i]}</span>` : ''}</span>
     <span class="track"><span class="fill" data-i="${i}" data-from="${prev[i] / top}" data-to="${g.scores[i] / top}" style="transform:scaleX(${g.scores[i] / top})"></span></span></div>`).join('');
-  return stage('felt', `<span class="eyebrow">Scoreboard · Round ${r.no}</span><p class="mid">${E.OUTCOME_TEXT[r.outcome]}</p>
+  return stage('felt', `<span class="eyebrow">Scores after round ${r.no}</span><p class="mid">${E.OUTCOME_TEXT[r.outcome]}</p>
     <p class="note">First to ${g.target} wins. Odd ${plural(r.spies.length, 'Card', 'Cards')}: <b>${spiesText(g)}</b>.</p><div class="score">${rows}</div>`);
 }
 
@@ -190,7 +190,7 @@ function settingsSheet() {
 function historySheet() {
   const g = G();
   const items = g ? [...g.history].reverse().map(h => `<div class="hist"><span class="w">Round ${h.no}: ${esc(h.word)}</span> <span class="pill">${esc(h.category)}</span><br>
-    <b>Odd ${h.spies.length > 1 ? 'Cards' : 'Card'}:</b> ${h.spies.map(esc).join(', ')} · <b>Accused:</b> ${h.accused === null ? 'no one (tie)' : esc(h.accused)}<br>${E.OUTCOME_TEXT[h.outcome]}<br>
+    <b>Odd ${h.spies.length > 1 ? 'Cards' : 'Card'}:</b> ${h.spies.map(esc).join(', ')}. <b>Accused:</b> ${h.accused === null ? 'no one (tie)' : esc(h.accused)}<br>${E.OUTCOME_TEXT[h.outcome]}<br>
     <b>Points:</b> ${g.names.map((n, i) => h.delta[i] ? `${esc(n)} +${h.delta[i]}` : '').filter(Boolean).join(', ') || 'none'}${h.tiebreak ? `<br><b>Tiebreak round</b> (${h.tiebreak.map(esc).join(', ')})` : ''}</div>`).join('') : '';
   return `<h2>Round history</h2><div class="sbody">${items || '<p class="nomatch">No rounds played yet.</p>'}</div><button class="mbtn" style="margin-top:14px;justify-content:center" data-act="back">Back</button>`;
 }
@@ -216,7 +216,7 @@ function winPopup() {
     return `<i style="--x:${Math.round(Math.random() * 100)}%;--col:${col};--d:${(2.6 + Math.random() * 2).toFixed(2)}s;--dl:${(Math.random() * 2.5).toFixed(2)}s;--dx:${Math.round(Math.random() * 120 - 60)}px;--r:${Math.round(360 + Math.random() * 540)}deg"></i>`;
   }).join('')}</div>`;
   return `<div class="win ${spyWon ? 'spy' : 'agent'}" role="dialog" aria-modal="true" aria-label="Game over">${confetti}<div class="win-in">
-    <span class="eyebrow">Game over · round ${r.no}</span>
+    <span class="eyebrow">Game over after round ${r.no}</span>
     <h1 class="headline">${names} win${leaders.length > 1 ? '' : 's'}!</h1>
     <p class="reason">${esc(g.names[leaders[0]])} reached ${pts} points (target ${g.target}). ${E.OUTCOME_TEXT[r.outcome]} The word was <b>${esc(r.word)}</b>.</p>
     <div class="reveal">${reveal}</div>
