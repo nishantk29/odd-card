@@ -3,13 +3,14 @@
 // - Navigations: network-first, falling back to the cached app shell.
 // - /api/* and /ws/* never touch the cache.
 // VERSION is a content hash of every precached file, so it changes whenever a file does.
-const VERSION = '2a47b87ed9';
+const VERSION = 'ca9ab4ca71';
 const PREFIX = 'odd-card-';
 const CACHE = PREFIX + VERSION;
 
 const SHELL = '/';
 const PRECACHE = [
   '/',
+  '/family.css',
   '/fonts/LICENSE-rubik.txt',
   '/fonts/rubik-var.woff2',
   '/icons/apple-touch-icon.png',
@@ -35,7 +36,7 @@ const PRECACHE = [
   '/manifest.webmanifest',
   '/pwa-install.js',
   '/setup.css',
-  '/styles.css',
+  '/styles.css'
 ];
 
 const isLive = (url) => url.pathname.startsWith('/api/') || url.pathname.startsWith('/ws/');
