@@ -39,7 +39,7 @@ The Host taps Phones, then Host a Room. The lobby shows a QR code (with a Fullsc
 
 ```
 npm test            # node --test test/*.test.js
-npx wrangler dev    # local preview (Phones mode needs this, or a deploy)
+npm run dev         # local preview: wrangler dev --local, no Cloudflare login (Phones mode needs this, or a deploy)
 npx wrangler deploy # deploy
 ```
 
