@@ -2,7 +2,10 @@
   "name": "odd-reveal",
   "main": "src/worker.js",
   "compatibility_date": "2026-10-01",
+  // workers.dev route and preview URLs, as live (GET .../workers/scripts/<name>/subdomain, Oct 30 2026: enabled, previews off).
+  // scripts/build-deploy.mjs posts exactly these two values; test/deploy-workersdev.test.js pins them to live.
   "workers_dev": true,
+  "preview_urls": false,
   "assets": { "directory": "./public", "binding": "ASSETS" },
   "ai": { "binding": "AI" },
   // Rules helper is server-only ("dark") until a UI ships; free tier only.
