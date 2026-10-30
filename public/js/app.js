@@ -6,6 +6,7 @@ import { holdCard, holdEnd, initHold, ODD_TEXT } from './holdcard.js';
 import * as P from './phones.js';
 import * as Su from './setup.js';
 import { backClosesSheets } from './back-sheet.js';
+import { parseDeepLink } from './deep-link.js';
 // Back (Android Back, the iOS edge swipe) closes the top sheet first, the same as a tap on its backdrop. The win and
 // round-over screens have no backdrop action, so Back leaves them alone.
 const backNav = backClosesSheets(() => {
@@ -390,7 +391,28 @@ document.addEventListener('visibilitychange', () => { wake(); });
 mq.addEventListener?.('change', render);
 Su.init({ render, legacy: S.setup, home: () => actions.home(), startLocal: (names, settings) => { startGame(names, settings); save(); render(); } });
 P.init({ render, haptics: () => S.haptics, closeSheet() { T.sheet = null; render(); }, hostLobby() { S.view = 'setup'; Su.hostLobby(); } });
-const room = new URLSearchParams(location.search).get('room');
+// A deep link (#/faq, #/presets, #/join/CODE...) opens the page it names, not the last saved view. The hash is dropped
+// once read, so a reload or the back-sheet history entries restore normally.
+const dropHash = () => { try { history.replaceState(history.state, '', location.pathname + location.search); } catch { /* sandboxed */ } };
+function applyLink(link) {
+  if (link.to === 'faq') { T.sheet = 'faq'; T.confirm = false; return; }
+  if (S.view !== 'setup') { S.view = 'setup'; Su.enter(); }
+  Su.showPresets();
+}
+const link = parseDeepLink(location.hash);
+if (link) dropHash();
+const room = link?.to === 'room' ? link.code : new URLSearchParams(location.search).get('room');
 if (room && /^[A-Za-z]{6}$/.test(room)) P.open(room.toUpperCase()); // a join link goes straight to the join screen
-else if (S.view === 'setup') { Su.resumeIfAny(); render(); }
-else render();
+else {
+  if (link?.to === 'presets') S.view = 'setup';
+  if (S.view === 'setup') Su.resumeIfAny();
+  if (link) applyLink(link);
+  render();
+}
+addEventListener('hashchange', () => {
+  const l = parseDeepLink(location.hash);
+  if (!l) return;
+  dropHash();
+  if (l.to === 'room') { P.open(l.code); return; }
+  applyLink(l); save(); render();
+});
