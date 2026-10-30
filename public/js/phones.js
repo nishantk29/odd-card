@@ -6,6 +6,7 @@ import { esc, oddIcon, icons } from './art.js';
 import { holdCard, buzz, ODD_TEXT } from './holdcard.js';
 import { qrSvg, joinUrl } from './qr.js';
 import { MIN_PLAYERS } from './room.js';
+import { toolsHTML } from './table-tools.js';
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -280,10 +281,12 @@ export function html() {
   return `<main class="wrap" data-phase="${v.phase}">${bar}<div class="screen">${P.err && v.phase !== 'lobby' ? err() : ''}${body}${v.phase === 'lobby' ? err() : ''}</div>${dock ? `<div class="dock">${dock}</div>` : ''}</main>`;
 }
 
+// Seated players' names, for the Pick tool in the menu.
+export const roomNames = () => (P?.view?.players || []).filter((p) => p.seat >= 0).map((p) => p.name);
 export function menuSheet() {
   const v = P?.view, host = v && isHost(v) && v.phase !== 'ended';
   const conf = P.confirmEnd ? `<div class="confirm"><p>End the game for everyone? Scores will be lost.</p><div class="row2"><button class="mbtn danger" data-pa="endYes">End game</button><button class="mbtn" data-pa="endNo">Keep playing</button></div></div>` : '';
-  return `<h2>Menu</h2><div class="menu"><button class="mbtn" data-act="faq">Rules &amp; FAQ</button><button class="mbtn" data-act="settings">Settings</button>
+  return `<h2>Menu</h2>${v ? toolsHTML(esc, roomNames().length > 0) : ''}<div class="menu"><button class="mbtn" data-act="faq">Rules &amp; FAQ</button><button class="mbtn" data-act="settings">Settings</button>
     ${host ? '<button class="mbtn danger" data-pa="endAsk">End game</button>' : ''}<button class="mbtn" data-pa="leave">Leave game</button></div>${conf}
     <button class="mbtn" style="margin-top:14px;justify-content:center" data-act="close">Close</button>`;
 }
