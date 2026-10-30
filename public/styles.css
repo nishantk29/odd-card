@@ -1,4 +1,4 @@
-@font-face{font-family:"Rubik";src:url("/fonts/rubik-var.woff2") format("woff2");font-weight:500 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Rubik";src:url("/fonts/rubik.woff2") format("woff2");font-weight:500 900;font-style:normal;font-display:swap}
 :root{--f-r-inset:4px; --f-r-field:12px; --f-r-card:20px; --f-r-sheet:28px; --f-r-pill:999px; --f-r-round:50%; --f-r-face:6% / 4.3%; /* family radius tokens */
   --bg:#0B0B0D;--felt:#0E7A4B;--felt-dk:#0A5A38;--ivory:#FFF7E6;--spy:#111114;--red:#E5383B;--red-deep:#B8262A;--gold:#F5C542;--teal:#1FB6B0;--ink:#111114;
   --ease-pop:cubic-bezier(.2,.8,.2,1);
