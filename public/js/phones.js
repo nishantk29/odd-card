@@ -115,6 +115,9 @@ const send = msg => { if (ws?.readyState === 1) ws.send(JSON.stringify(msg)); el
 
 function onView(v) {
   const old = P.prev; P.prev = v; P.view = v; P.step = 'room';
+  // This phone made the room (it holds the host key) but its seat is not the Host: take the Host back, once per room.
+  const hk = store.get(K.host(v.code));
+  if (hk && !v.me.host && v.phase !== 'ended' && P.claimed !== v.code && ws?.readyState === 1) { P.claimed = v.code; ws.send(JSON.stringify({ type: 'claimHost', hostKey: hk })); }
   const key = `${v.phase}:${v.game?.round}`;
   if (P.key !== key) { P.key = key; P.revealed = false; P.guess = ''; }
   if (P.localKey !== v.localPass?.id) { P.localKey = v.localPass?.id; P.revealedLocal = false; }

@@ -37,7 +37,11 @@ test('create, join, duplicate names, host key and the 12-player cap', () => {
   assert.deepEqual(t.room.players.map(p => p.host), [true, false, false]);
   assert.match(act(t.room, null, { type: 'join', name: ' p1 ' }).error, /already has that name/);
   assert.match(reduce(t.room, {}, { type: 'join', name: '   ' }).error, /name/);
-  assert.equal(must(reduce(t.room, {}, { type: 'join', name: 'Late', hostKey: 'hk' })).data.host, false, 'only one host');
+  // A second join with the host key is the Host's phone coming back: it gets the Host seat, never a second Host.
+  const again = must(reduce(t.room, {}, { type: 'join', name: 'Late', hostKey: 'hk' })).data;
+  assert.equal(again.playerId, t.room.players[0].id, 'the Host seat back');
+  assert.equal(t.room.players.filter(p => p.host).length, 1, 'only one host');
+  must(reduce(t.room, {}, { type: 'join', name: 'Late' }));
   for (let i = 0; i < 8; i++) must(reduce(t.room, {}, { type: 'join', name: `X${i}` }));
   assert.equal(t.room.players.length, 12);
   assert.match(reduce(t.room, {}, { type: 'join', name: 'Thirteen' }).error, /full/);

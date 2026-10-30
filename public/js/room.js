@@ -81,6 +81,13 @@ export function reduce(room, actor, msg, rng = cryptoRng) {
 
   switch (msg.type) {
     case 'join': {
+      // The Host's phone lost its seat (storage cleared, a bad token): the host key from that phone takes the Host's
+      // seat back, in the lobby or mid-game, with a new token. Without this nobody could move the room on.
+      const hostSeat = room.players.find(p => p.host);
+      if (msg.hostKey && msg.hostKey === room.hostKey && hostSeat && room.phase !== 'ended') {
+        hostSeat.token = randToken(rng);
+        return ok({ playerId: hostSeat.id, token: hostSeat.token, host: true, reclaimed: true });
+      }
       const name = cleanName(msg.name);
       if (!name) return err('Type your name first.');
       if (room.phase !== 'lobby') return err('That game has already started. Ask the Host to start a new one.');
@@ -101,6 +108,14 @@ export function reduce(room, actor, msg, rng = cryptoRng) {
       const p = { id: `p${room.nextId++}`, name, token: null, host: false, local: true };
       room.players.push(p);
       return ok({ playerId: p.id });
+    }
+    case 'claimHost': { // a seated player whose phone holds the host key becomes the Host again (Quest and Gilded have the same)
+      if (!me) return err('Join the room first.');
+      if (!msg.hostKey || msg.hostKey !== room.hostKey) return err('That host key does not match.');
+      if (me.host) return ok();
+      for (const p of room.players) p.host = false;
+      me.host = true;
+      return ok();
     }
     case 'kick': {
       const e = hostOnly(); if (e) return e;
