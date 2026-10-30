@@ -1,6 +1,12 @@
 // Cloudflare Worker: the API + WebSocket entry points for Phones mode. Static files come from Workers Static Assets.
 import { DurableObject } from 'cloudflare:workers';
 import { newRoom, reduce, broadcastPlan, socketsToDrop } from '../public/js/room.js';
+import { handleAiInternal } from './ai.js';
+import { askRule } from './ask.js';
+import { RULES_INDEX, RULES_HASH } from './rules-index.js';
+
+const AI_SITE = 'odd';
+const AI_GAME = 'The Odd Card';
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // no I/O look-alikes
 const ROOM_TTL_MS = 12 * 60 * 60 * 1000;
@@ -38,6 +44,13 @@ export default {
       return stub.fetch(request);
     }
 
+    // Ask a rule (server only, no UI yet). Reads the rules text, never a room. Any failure answers { answer: null }.
+    if (url.pathname === '/api/ask' && request.method === 'POST') {
+      let q = ''; try { const t = await request.text(); if (t.length <= 2048) q = String(JSON.parse(t)?.q ?? ''); } catch { /* bad body: answer null */ }
+      const r = await askRule(env, { site: AI_SITE, game: AI_GAME, index: RULES_INDEX, rulesVersion: RULES_HASH, question: q });
+      return new Response(JSON.stringify(r), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+    }
+
     return env.ASSETS ? env.ASSETS.fetch(request) : new Response('Not found', { status: 404 });
   },
 };
@@ -66,6 +79,8 @@ export class Room extends DurableObject {
 
   async fetch(request) {
     await this.ready;
+    const aiInternal = await handleAiInternal(this.ctx.storage, request); // reserved budget and cache instances only
+    if (aiInternal) return aiInternal;
     const url = new URL(request.url);
     if (url.pathname === '/init') {
       if (this.room) return new Response('exists', { status: 409 });
