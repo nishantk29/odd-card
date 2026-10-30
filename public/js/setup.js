@@ -345,6 +345,7 @@ export function leaveView() { open = false; T.page = null; T.sheet = null; }
 export function hostLobby() { open = true; if (F) { T.slideFrom = null; F.step = 3; persist(); } }
 export function resumeIfAny() { const c = P.lastRoom(); if (c && !P.inSetup()) { open = true; P.resumeSetup(c); } else enter(); }
 export const isPage = () => T.page === 'presets';
+export function showPresets() { T.page = 'presets'; T.sheet = null; } // the #/presets deep link
 
 // After each render: put the slide, focus and caret where they belong.
 export function afterRender() {
