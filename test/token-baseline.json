@@ -3,7 +3,7 @@
  "counts": {
   "fontSize": 74,
   "lineHeight": 31,
-  "spacing": 103,
+  "spacing": 102,
   "radius": 1,
   "iconSize": 39,
   "colour": 55
@@ -146,7 +146,7 @@
    "setup.css|.sets li|gap|2px": 1,
    "setup.css|.opt .t|gap|2px": 1,
    "setup.css|.chipb|padding|0 18px": 1,
-   "styles.css|.wrap|padding|max(20px,env(safe-area-inset-top)) 16px 0": 1,
+   "styles.css|.wrap|padding|max(20px,env(safe-area-inset-top)) var(--pad-r) 0 var(--pad-l)": 1,
    "styles.css|.pill|padding|6px 14px": 1,
    "styles.css|.bar|gap|8px": 1,
    "styles.css|.bar|padding|4px 0 14px": 1,
@@ -157,8 +157,7 @@
    "styles.css|.mid|margin-top|12px": 1,
    "styles.css|.line.gesture|padding|10px 14px": 1,
    "styles.css|.note|margin-top|14px": 1,
-   "styles.css|.dock|margin|auto -16px 0": 1,
-   "styles.css|.dock|padding|var(--s4) 16px calc(14px + env(safe-area-inset-bottom))": 1,
+   "styles.css|.dock|padding|var(--s4) var(--pad-r) calc(14px + env(safe-area-inset-bottom)) var(--pad-l)": 1,
    "styles.css|.dock|gap|10px": 1,
    "styles.css|.row2|gap|12px": 1,
    "styles.css|.wordcard|margin-top|16px": 1,
@@ -173,7 +172,7 @@
    "styles.css|.srow .nm span:not(.nt)|padding|2px 8px": 1,
    "styles.css|.srow .pts|gap|8px": 1,
    "styles.css|.srow .gain|padding|3px 9px": 1,
-   "styles.css|.sheet|padding|6px 20px calc(20px + env(safe-area-inset-bottom))": 1,
+   "styles.css|.sheet|padding|6px calc(20px + var(--inset-r)) calc(20px + env(safe-area-inset-bottom)) calc(20px + var(--inset-l))": 1,
    "styles.css|.sheet .grab span|margin|10px auto 0": 1,
    "styles.css|.sbody|margin-top|14px": 1,
    "styles.css|.menu|gap|10px": 1,
@@ -197,7 +196,7 @@
    "styles.css|.nrow input|padding|0 16px": 1,
    "styles.css|.stepper|gap|12px": 1,
    "styles.css|.stepper|margin-top|12px": 1,
-   "styles.css|.win-in|padding|max(28px,env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom))": 1,
+   "styles.css|.win-in|padding|max(28px,env(safe-area-inset-top)) calc(20px + var(--inset-r)) calc(20px + env(safe-area-inset-bottom)) calc(20px + var(": 1,
    "styles.css|.win-in|gap|12px": 1,
    "styles.css|.reveal|gap|8px": 1,
    "styles.css|.reveal|margin-top|6px": 1,
@@ -220,7 +219,7 @@
    "styles.css|.plist|gap|8px": 1,
    "styles.css|.prow|gap|10px": 1,
    "styles.css|.prow|padding|6px 8px 6px 14px": 1,
-   "styles.css|#qrfs|padding|16px": 1
+   "styles.css|#qrfs|padding|16px calc(16px + var(--safe-r)) 16px calc(16px + var(--safe-l))": 1
   },
   "radius": {
    "styles.css|.confetti i|border-radius|3px": 1
