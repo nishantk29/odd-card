@@ -16,9 +16,16 @@ const shot = (p, f) => (SHOTS ? p.shot(SHOTS, f) : Promise.resolve());
 
 // ---- helpers -------------------------------------------------------------------------------------------
 async function holdRead(p, key = 'me', ms = 450) {
+  // Phones mode repaints on every room update, so the card can be swapped for a fresh copy between waitFor() and
+  // boundingBox(), which then returns null (the audit crash). Look the card up again, up to 5 times, before pressing.
   const card = p.page.locator(`.holdcard[data-hold="${key}"]`);
-  await card.waitFor({ state: 'visible', timeout: 8000 });
-  const b = await card.boundingBox();
+  let b = null;
+  for (let attempt = 0; attempt < 5 && !b; attempt++) {
+    if (attempt) await sleep(100);
+    await card.waitFor({ state: 'visible', timeout: 8000 });
+    b = await card.boundingBox();
+  }
+  if (!b) throw new Error(`holdRead: the ${key} card kept re-rendering, no box after 5 tries`);
   await p.page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
   await p.page.mouse.down();
   await sleep(ms);
