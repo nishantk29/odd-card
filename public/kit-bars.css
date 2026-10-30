@@ -1,0 +1,11 @@
+/* Floating Liquid Glass dock (Nishant 2026-10-30: glass only on floating chrome). Odd has no tab bar, so the one floating
+   bar is the bottom dock: a glass tray inset by the page margin, floating above the home indicator. The buttons inside keep
+   their own opaque fills (no blur of their own). Budget: 1 live blur layer. The family tokens make it solid under
+   data-noblur, no backdrop-filter support, reduced transparency or more contrast. An open sheet or the QR screen makes it
+   solid too, so glass never sits on glass. Loaded LAST. */
+.dock,.su .dock{bottom:var(--f-safe-b);margin:auto 0 var(--f-safe-b);padding:var(--f-s3) 0;border-radius:var(--f-r-sheet);
+  background:var(--f-glass-tint);-webkit-backdrop-filter:var(--f-glass-blur);backdrop-filter:var(--f-glass-blur);
+  box-shadow:var(--f-glass-edge),var(--f-glass-shadow);isolation:isolate}
+.dock>*{margin-inline:var(--f-s3)}   /* the tray's inner side spacing sits on its children, so the tray's own edges carry the safe area */
+.su .dock{margin-inline:calc(var(--f-s4) + var(--inset-l)) calc(var(--f-s4) + var(--inset-r))}   /* landscape: the tray clears the notch */
+html:has(.scrim,.sheet,#qrfs:not([hidden])) .dock{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--f-glass-solid)}
