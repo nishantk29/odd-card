@@ -192,6 +192,7 @@ function menuSheet() {
 function settingsSheet() {
   const sw = (act, label, on) => `<button class="mbtn" data-act="${act}" role="switch" aria-checked="${on}">${label}<span class="switch${on ? ' on' : ''}"></span></button>`;
   return `<h2>Settings</h2><div class="menu">${sw('anim', 'Animations', S.anim)}${sw('haptics', 'Vibration', S.haptics)}${sw('wake', 'Keep screen on', S.wake)}</div>
+    <kit-display-prefs class="kp-sheet"></kit-display-prefs>
     <p class="note">Animations also follow your phone’s reduced-motion setting. Vibration and Keep Screen On only work where your browser supports them.</p>
     <button class="mbtn" style="margin-top:14px;justify-content:center" data-act="close">Close</button>`;
 }
