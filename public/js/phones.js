@@ -148,20 +148,20 @@ const next = (label, act, { cls = '', dis = false, extra = '' } = {}) => `<butto
 
 // ---- screens ---------------------------------------------------------------
 function entryHTML() {
-  return `<main class="wrap"><div class="bar"><button class="iconbtn" data-pa="exit" aria-label="Home">${icons.back()}</button><span class="grow"></span><button class="iconbtn" data-act="faq" aria-label="Rules and FAQ">?</button></div>
+  return `<main class="wrap"><div class="bar"><button class="iconbtn" data-pa="exit" aria-label="The Odd Card home">${icons.back()}</button><span class="grow"></span><button class="iconbtn" data-act="faq" aria-label="Rules and FAQ">?</button></div>
   <div class="screen">${stage('felt', `<span class="eyebrow">Join a game</span><h1 class="mid">Join on your own phone</h1>
     <label class="fld"><span>Your name</span><input data-pin="name" value="${esc(P.name)}" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="Name"></label>
     <label class="fld"><span>Room code</span><input class="codein" data-pin="codeInput" value="${esc(P.codeInput)}" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDEF"></label>
-    ${err()}<button class="next gold-btn" data-pa="join" ${P.wait ? 'disabled' : ''}>Join room</button>
-    <p class="note">The Host starts a room from New game and shows the code and a QR.</p>`)}</div></main>`;
+    ${err()}<button class="next gold-btn" data-pa="join" ${P.wait ? 'disabled' : ''}>Join</button>
+    <p class="note">The Host starts a room from Host a game and shows the code and a QR.</p>`)}</div></main>`;
 }
 
 function joinHTML() {
-  if (P.gone) return `<main class="wrap"><div class="bar"><button class="iconbtn" data-pa="exit" aria-label="Home">${icons.back()}</button></div><div class="screen">${stage('red', `<span class="eyebrow">Room ${esc(P.code)}</span><h1 class="mid">Room not found</h1>${err()}<p class="note">The Host may have ended the game, or the code is wrong.</p>`)}</div></main>`;
-  return `<main class="wrap"><div class="bar"><button class="iconbtn" data-pa="exit" aria-label="Home">${icons.back()}</button><span class="grow"></span><button class="iconbtn" data-act="faq" aria-label="Rules and FAQ">?</button></div>
+  if (P.gone) return `<main class="wrap"><div class="bar"><button class="iconbtn" data-pa="exit" aria-label="The Odd Card home">${icons.back()}</button></div><div class="screen">${stage('red', `<span class="eyebrow">Room ${esc(P.code)}</span><h1 class="mid">Room not found</h1>${err()}<p class="note">The Host may have ended the game, or the code is wrong.</p>`)}</div></main>`;
+  return `<main class="wrap"><div class="bar"><button class="iconbtn" data-pa="exit" aria-label="The Odd Card home">${icons.back()}</button><span class="grow"></span><button class="iconbtn" data-act="faq" aria-label="Rules and FAQ">?</button></div>
   <div class="screen">${stage('felt', `<span class="eyebrow">Join room</span><div class="roomcode">${esc(P.code)}</div>
     <label class="fld"><span>Your name</span><input data-pin="name" value="${esc(P.name)}" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="Name"></label>${err()}`)}</div>
-  <div class="dock">${next('Join room', 'join', { dis: P.wait })}</div></main>`;
+  <div class="dock">${next('Join', 'join', { dis: P.wait })}</div></main>`;
 }
 
 const err = () => (P.err ? `<p class="perr" role="alert">${esc(P.err)}</p>` : '');
@@ -245,43 +245,43 @@ function scoreBody(v) {
   return stage('felt', `<span class="eyebrow">Scores after round ${g.round}</span><p class="mid">${esc(r.text)}</p><p class="note">First to ${g.target} wins. Odd ${plural(r.odd.length, 'Card', 'Cards')}: <b>${r.odd.map(id => nm(v, id)).join(' and ')}</b>.</p>${tb}<div class="score">${rows}</div>`);
 }
 
-function endedBody() { return stage('spy', `<span class="eyebrow">Room closed</span><h1 class="mid">The Host ended the game</h1><p class="note">Thanks for playing. Tap Home to leave.</p>`); }
+function endedBody() { return stage('spy', `<span class="eyebrow">Room closed</span><h1 class="mid">The Host ended the game</h1><p class="note">Thanks for playing. Tap The Odd Card home to leave.</p>`); }
 
 function dockFor(v) {
   const g = v.game, host = isHost(v), id = v.me.id;
   switch (v.phase) {
-    case 'lobby': return host ? next('Start Game', 'start', { dis: v.players.length < MIN_PLAYERS }) : '';
+    case 'lobby': return host ? next('Start game', 'start', { dis: v.players.length < MIN_PLAYERS }) : '';
     case 'pass': {
       const ready = g.ready.includes(id);
-      if (host && v.localPass) return next('Done, Pass On', 'localReady', { dis: !P.revealedLocal });
+      if (host && v.localPass) return next('Hide and pass on', 'localReady', { dis: !P.revealedLocal });
       if (host) return next('Start clues', 'begin', { dis: !P.revealed && !ready });
-      return next(ready ? 'Waiting for others' : 'Got it', 'ready', { dis: ready || !P.revealed });
+      return next(ready ? 'Waiting for others' : 'I’m ready', 'ready', { dis: ready || !P.revealed });
     }
-    case 'clues': return g.speaker === id || host ? next(g.turn === g.turns - 1 ? 'Go to vote' : g.speaker === id ? 'Done, next player' : 'Next player', 'clueDone') : '';
+    case 'clues': return g.speaker === id || host ? next(g.turn === g.turns - 1 ? 'Go to vote' : g.speaker === id ? 'I’m done' : 'Next', 'clueDone') : '';
     case 'vote': return host ? next('Close vote', 'closeVote', { cls: 'teal', dis: g.voted.length === 0 }) : '';
-    case 'reveal': return host ? next(g.accusedOdd ? 'Odd Card Guesses' : 'Next', 'next') : '';
-    case 'guess': return host ? (g.grid ? `<button class="next red" data-pa="judge" data-right="0">Skip Guess (Wrong)</button>` : `<div class="row2"><button class="next teal" data-pa="judge" data-right="1">Right</button><button class="next red" data-pa="judge" data-right="0">Wrong</button></div>`) : '';
-    case 'flip': return host ? next('Show Scores', 'next') : '';
-    case 'score': return host ? next(g.win.status === 'win' ? 'See the Winner' : g.win.status === 'tie' ? 'Tiebreak Round' : 'Next round', 'next') : '';
+    case 'reveal': return host ? next(g.accusedOdd ? 'Next: Odd Card guess' : 'Next', 'next') : '';
+    case 'guess': return host ? (g.grid ? `<button class="next red" data-pa="judge" data-right="0">Skip the guess</button><p class="note">A skipped guess counts as wrong.</p>` : `<div class="row2"><button class="next teal" data-pa="judge" data-right="1">Right</button><button class="next red" data-pa="judge" data-right="0">Wrong</button></div>`) : '';
+    case 'flip': return host ? next('Show scores', 'next') : '';
+    case 'score': return host ? next(g.win.status === 'win' ? 'Show the winner' : g.win.status === 'tie' ? 'Next: Tiebreak round' : `Next: Round ${g.round + 1}`, 'next') : '';
     default: return '';
   }
 }
 
 export function html() {
   if (P.step === 'entry') return entryHTML();
-  if (!P.view) return P.step === 'room' ? `<main class="wrap"><div class="screen">${stage('spy', `<span class="eyebrow">Room ${esc(P.code)}</span><h1 class="mid">${P.conn ? 'Joining…' : 'Connecting…'}</h1>${err()}`)}</div><div class="dock"><button class="mbtn" data-pa="leave" style="justify-content:center">Leave room</button></div></main>` : joinHTML();
+  if (!P.view) return P.step === 'room' ? `<main class="wrap"><div class="screen">${stage('spy', `<span class="eyebrow">Room ${esc(P.code)}</span><h1 class="mid">${P.conn ? 'Joining…' : 'Connecting…'}</h1>${err()}`)}</div><div class="dock"><button class="mbtn" data-pa="leave" style="justify-content:center">Leave game</button></div></main>` : joinHTML();
   const v = P.view, g = v.game;
   const body = { lobby: lobbyBody, pass: passBody, clues: cluesBody, vote: voteBody, reveal: revealBody, guess: guessBody, flip: flipBody, score: scoreBody, over: scoreBody, ended: endedBody }[v.phase]?.(v) || '';
-  const dock = v.phase === 'ended' ? `<button class="next" data-pa="leave">Home</button>` : dockFor(v);
+  const dock = v.phase === 'ended' ? `<button class="next" data-pa="leave">The Odd Card home</button>` : dockFor(v);
   const bar = `<div class="bar">${g ? `<span class="pill gold">Round ${g.round}</span><span class="pill">First to ${g.target}</span>` : `<span class="pill gold">Room ${esc(v.code)}</span>`}${P.conn ? '' : '<span class="pill">Reconnecting…</span>'}<span class="grow"></span><button class="iconbtn" data-act="pmenu" aria-label="Menu">${icons.menu()}</button></div>`;
   return `<main class="wrap" data-phase="${v.phase}">${bar}<div class="screen">${P.err && v.phase !== 'lobby' ? err() : ''}${body}${v.phase === 'lobby' ? err() : ''}</div>${dock ? `<div class="dock">${dock}</div>` : ''}</main>`;
 }
 
 export function menuSheet() {
   const v = P?.view, host = v && isHost(v) && v.phase !== 'ended';
-  const conf = P.confirmEnd ? `<div class="confirm"><p>End the game for everyone? Scores will be lost.</p><div class="row2"><button class="mbtn danger" data-pa="endYes">Yes, end game</button><button class="mbtn" data-pa="endNo">Cancel</button></div></div>` : '';
+  const conf = P.confirmEnd ? `<div class="confirm"><p>End the game for everyone? Scores will be lost.</p><div class="row2"><button class="mbtn danger" data-pa="endYes">End game</button><button class="mbtn" data-pa="endNo">Keep playing</button></div></div>` : '';
   return `<h2>Menu</h2><div class="menu"><button class="mbtn" data-act="faq">Rules &amp; FAQ</button><button class="mbtn" data-act="settings">Settings</button>
-    ${host ? '<button class="mbtn danger" data-pa="endAsk">End game</button>' : ''}<button class="mbtn" data-pa="leave">Leave room</button></div>${conf}
+    ${host ? '<button class="mbtn danger" data-pa="endAsk">End game</button>' : ''}<button class="mbtn" data-pa="leave">Leave game</button></div>${conf}
     <button class="mbtn" style="margin-top:14px;justify-content:center" data-act="close">Close</button>`;
 }
 
@@ -294,12 +294,12 @@ export function overHTML(isFlat) {
   const names = leaders.map(id => nm(v, id)).join(' &amp; ');
   const rows = v.players.filter(p => p.seat >= 0).map(p => { const odd = r.odd.includes(p.id);
     return `<div class="rv${leaders.includes(p.id) ? ' me' : ''}"><span class="nm">${esc(p.name)}</span><span class="tag ${odd ? 'black' : 'red'}">${odd ? 'Odd Card' : 'Word Holder'}${r.delta[p.id] ? ` +${r.delta[p.id]}` : ''}</span><span class="tot">${g.scores[p.id]}</span></div>`; }).join('');
-  const confetti = isFlat ? '' : `<div class="confetti" aria-hidden="true">${Array.from({ length: 44 }, (_, i) => `<i style="--x:${Math.round(Math.random() * 100)}%;--col:${['#F5C542', '#E5383B', '#1FB6B0', '#FFF7E6'][i % 4]};--d:${(2.6 + Math.random() * 2).toFixed(2)}s;--dl:${(Math.random() * 2.5).toFixed(2)}s;--dx:${Math.round(Math.random() * 120 - 60)}px;--r:${Math.round(360 + Math.random() * 540)}deg"></i>`).join('')}</div>`;
+  const confetti = isFlat ? '' : `<div class="confetti" aria-hidden="true">${Array.from({ length: 44 }, (_, i) => `<i style="--x:${Math.round(Math.random() * 100)}%;--col:${['#F5C542', '#E5383B', '#1FB6B0', '#FFF7E6'][i % 4]};--d:${(0.3 + Math.random() * 0.06).toFixed(2)}s;--dl:${(Math.random() * 0.04).toFixed(2)}s;--dx:${Math.round(Math.random() * 120 - 60)}px;--r:${Math.round(360 + Math.random() * 540)}deg"></i>`).join('')}</div>`;
   return `<div class="win ${oddWon ? 'spy' : 'agent'}" role="dialog" aria-modal="true" aria-label="Game over">${confetti}<div class="win-in">
     <span class="eyebrow">Game over after round ${g.round}</span><h1 class="headline">${names} win${leaders.length > 1 ? '' : 's'}!</h1>
     <p class="reason">${nm(v, leaders[0])} reached ${g.scores[leaders[0]]} points (target ${g.target}). ${esc(r.text)} The word was <b>${esc(r.word)}</b>.</p><div class="reveal">${rows}</div>
     ${isHost(v) ? '<button class="next" data-pa="again" style="margin-top:8px">Play again</button>' : '<p class="note">Waiting for the Host to start another game.</p>'}
-    <button class="mbtn" data-pa="leave" style="justify-content:center">Leave room</button></div></div>`;
+    <button class="mbtn" data-pa="leave" style="justify-content:center">Leave game</button></div></div>`;
 }
 
 // ---- QR: Fullscreen API with a full-viewport overlay fallback (iPhone Safari) --------
