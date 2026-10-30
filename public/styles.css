@@ -276,3 +276,6 @@ button.gw:active{background:var(--gold)}
 
 /* press feedback lands on press-in in --f-press (not scaled); release runs in --f-release (about 0.7x) */
 @media (prefers-reduced-motion:no-preference){html:not(.flat) :is(.tile,.next,.wordcard,.pbtn):active{transition-duration:var(--f-press)}}
+
+/* Display preferences (kit-prefs.js) in the Settings sheet, under the switches */
+.kp-sheet{margin-top:var(--f-s4)}
