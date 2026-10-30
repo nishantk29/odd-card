@@ -1,5 +1,9 @@
 @font-face{font-family:"Rubik";src:url("/fonts/rubik-var.woff2") format("woff2");font-weight:500 900;font-style:normal;font-display:swap}
-:root{--f-r-inset:4px; --f-r-field:12px; --f-r-card:20px; --f-r-sheet:28px; --f-r-pill:999px; --f-r-round:50%; --f-r-face:6% / 4.3%; /* family radius tokens */
+:root{--safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px); /* landscape safe areas (viewport-fit=cover), SPACING.md 3 */
+  --page-max:560px; --centre-gap:max(0px,calc((100vw - var(--page-max)) / 2)); /* a centred 560px column already sits this far from each edge */
+  --inset-l:max(0px,calc(var(--safe-l) - var(--centre-gap))); --inset-r:max(0px,calc(var(--safe-r) - var(--centre-gap))); /* only the part of the inset the centring doesn't clear */
+  --margin:16px; --pad-l:calc(var(--margin) + var(--inset-l)); --pad-r:calc(var(--margin) + var(--inset-r));
+  --f-r-inset:4px; --f-r-field:12px; --f-r-card:20px; --f-r-sheet:28px; --f-r-pill:999px; --f-r-round:50%; --f-r-face:6% / 4.3%; /* family radius tokens */
   --bg:#0B0B0D;--felt:#0E7A4B;--felt-dk:#0A5A38;--ivory:#FFF7E6;--spy:#111114;--red:#E5383B;--red-deep:#B8262A;--gold:#F5C542;--teal:#1FB6B0;--ink:#111114;
   --ease-pop:cubic-bezier(.2,.8,.2,1);
   --f-press:120ms;--f-release:90ms;--f-press-scale:.97;--f-press-row:rgba(255,255,255,.08); /* press feedback: never scaled, nothing runs over 400ms */--dim:#CFC9B8;
@@ -11,7 +15,7 @@ body.open{overflow:hidden}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:4px solid var(--ivory);outline-offset:3px}
 [hidden]{display:none!important}
-.wrap{max-width:560px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 16px 0;min-height:100dvh;display:flex;flex-direction:column}
+.wrap{max-width:560px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) var(--pad-r) 0 var(--pad-l);min-height:100dvh;display:flex;flex-direction:column}
 
 /* pills & chips */
 .pill{display:inline-block;padding:6px 14px;border-radius:var(--f-r-pill);background:#26262E;color:#E6E6EE;font-weight:700;font-size:15px}
@@ -67,7 +71,7 @@ button:focus-visible,input:focus-visible{outline:4px solid var(--ivory);outline-
 .line.gesture{padding:10px 14px;border-radius:var(--f-r-field);background:rgba(0,0,0,.24)}
 .stage.gold .line.gesture,.stage.teal .line.gesture{background:rgba(0,0,0,.12)}
 .note{margin-top:14px;font-size:17px;line-height:1.45;font-weight:500}
-.dock{position:sticky;bottom:0;margin:auto -16px 0;padding:var(--s4) 16px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,var(--bg) 30%);display:grid;gap:10px;z-index:3}
+.dock{position:sticky;bottom:0;margin:auto calc(-1 * var(--pad-r)) 0 calc(-1 * var(--pad-l));padding:var(--s4) var(--pad-r) calc(14px + env(safe-area-inset-bottom)) var(--pad-l);background:linear-gradient(180deg,transparent,var(--bg) 30%);display:grid;gap:10px;z-index:3}
 .next{display:flex;align-items:center;justify-content:center;width:100%;min-height:76px;border-radius:var(--f-r-pill);background:var(--gold);color:var(--ink);font-size:34px;font-weight:900;letter-spacing:.01em;
   transition:transform var(--f-release) var(--ease-pop)}
 .next:active{transform:scale(var(--f-press-scale))}
@@ -109,7 +113,7 @@ button:focus-visible,input:focus-visible{outline:4px solid var(--ivory);outline-
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:10;animation:fade .18s both}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .sheet{--solid:#0A5A38;position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;max-height:92dvh;display:flex;flex-direction:column;z-index:11;color:var(--ivory);
-  padding:6px 20px calc(20px + env(safe-area-inset-bottom));border-radius:var(--f-r-card) var(--f-r-card) 0 0;background:var(--solid);box-shadow:0 120px 0 var(--solid);animation:rise .18s var(--ease-pop) both}
+  padding:6px calc(20px + var(--inset-r)) calc(20px + env(safe-area-inset-bottom)) calc(20px + var(--inset-l));border-radius:var(--f-r-card) var(--f-r-card) 0 0;background:var(--solid);box-shadow:0 120px 0 var(--solid);animation:rise .18s var(--ease-pop) both}
 @keyframes rise{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
 .sheet.s-spy{--solid:#17171c}
 .sheet .grab{display:block;width:100%;height:30px}
@@ -170,7 +174,7 @@ mark{background:var(--gold);color:var(--ink);border-radius:var(--f-r-inset);padd
 .win.spy{--solid:#17171c}
 .win.agent .headline{color:var(--gold)}
 .win.spy .headline{color:var(--red)}
-.win-in{position:relative;z-index:2;max-width:560px;width:100%;margin:0 auto;max-height:100dvh;overflow-y:auto;padding:max(28px,env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
+.win-in{position:relative;z-index:2;max-width:560px;width:100%;margin:0 auto;max-height:100dvh;overflow-y:auto;padding:max(28px,env(safe-area-inset-top)) calc(20px + var(--inset-r)) calc(20px + env(safe-area-inset-bottom)) calc(20px + var(--inset-l));display:flex;flex-direction:column;gap:12px}
 .headline{font-size:clamp(44px,14vw,72px);font-weight:900;letter-spacing:-.035em;line-height:.98;animation:pop .18s var(--ease-pop) both}
 .reason{font-size:19px;font-weight:600;line-height:1.35}
 .reveal{display:grid;gap:8px;margin-top:6px}
@@ -256,7 +260,7 @@ button.gw:active{background:var(--gold)}
 .dot{width:10px;height:10px;flex:none;border-radius:var(--f-r-round);background:#6b6b75}
 .dot.on{background:var(--teal)}
 .segb[disabled]{opacity:.85}
-#qrfs{position:fixed;inset:0;z-index:200;display:grid;place-content:center;justify-items:center;gap:var(--s3);padding:16px;background:#fff;color:#1B1410;cursor:pointer;overscroll-behavior:contain}
+#qrfs{position:fixed;inset:0;z-index:200;display:grid;place-content:center;justify-items:center;gap:var(--s3);padding:16px calc(16px + var(--safe-r)) 16px calc(16px + var(--safe-l));background:#fff;color:#1B1410;cursor:pointer;overscroll-behavior:contain}
 #qrfs[hidden]{display:none}
 #qrfs .qr{display:block;width:min(88vw,70vh);height:auto}
 #qrfs .qr-code{margin:0;font-weight:900;font-size:clamp(2rem,10vw,3.5rem);line-height:1;letter-spacing:.2em;text-indent:.2em}
