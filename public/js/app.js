@@ -1,4 +1,5 @@
 // The Odd Card: host UI. All rules live in engine.js; this file renders state and dispatches actions.
+import { toolsHTML, toolAct, resetTools } from './table-tools.js';
 import * as E from './engine.js';
 import { esc, titleArt, oddIcon, icons } from './art.js';
 import { faqResults } from './faq.js';
@@ -179,7 +180,7 @@ function gameHTML() {
 function menuSheet() {
   const g = G();
   const conf = T.confirm ? `<div class="confirm"><p>Start a new game? The current game and its scores will be lost.</p><div class="row2"><button class="mbtn danger" data-act="newYes">Restart game</button><button class="mbtn" data-act="newNo">Keep playing</button></div></div>` : '';
-  return `<h2>Host Menu</h2><div class="menu">
+  return `<h2>Host Menu</h2>${toolsHTML(esc, !!(g && g.names.length))}<div class="menu">
     <button class="mbtn" data-act="undo" ${g && E.canUndo(g) ? '' : 'disabled'}>Undo</button>
     <button class="mbtn" data-act="history">Round history</button>
     <button class="mbtn" data-act="faq">Rules &amp; FAQ</button>
@@ -324,7 +325,10 @@ const actions = {
   resume() { S.view = 'game'; },
   home() { S.view = 'home'; T.sheet = null; T.confirm = false; Su.leaveView(); },
   faq() { T.sheet = 'faq'; },
-  menu() { T.sheet = 'menu'; T.confirm = false; },
+  menu() { T.sheet = 'menu'; T.confirm = false; resetTools(); },
+  tcoin() { toolAct('coin'); },
+  tdie() { toolAct('die'); },
+  tpick() { toolAct('pick', G() ? G().names : []); },
   close() { T.sheet = null; T.confirm = false; },
   back() { T.sheet = 'menu'; },
   history() { T.sheet = 'history'; },
