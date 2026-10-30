@@ -79,7 +79,7 @@ const chip = (name, { phone, onX, label }) => `<li class="pchip"><span class="in
 function playersPanel(f) {
   const { info } = f;
   const roomLine = info.status === 'ready'
-    ? `<p class="roomline">${icons.qr()}<span>Join with code <b class="code" data-code="${esc(info.code)}">${esc(info.code)}</b></span><button class="link" data-su="qr">Show QR</button></p>`
+    ? `<p class="roomline">${icons.qr()}<span>Join with code <b class="code" data-code="${esc(info.code)}">${esc(info.code)}</b></span><button class="link" data-su="qr">Show QR code</button></p>`
     : info.status === 'connecting'
       ? `<p class="roomline">${icons.qr()}<span>Opening a room…</span></p>`
       : `<p class="roomline">${icons.qr()}<span>${esc(info.error || 'No room yet.')} One phone still works.</span><button class="link" data-su="retry">Try again</button></p>`;
@@ -123,7 +123,7 @@ function roundPanel(f) {
   return `<h1 class="disp" tabindex="-1">Pick the round</h1>
     <ul class="presets one">${presetCard(p, f.total, { cur: true, tag: `<span class="sel">${icons.check()}${custom ? 'Edited' : 'Picked'}</span>` })}</ul>
     <p class="line2">${F.settings.mode === 'grid' ? 'Grid' : 'Classic'}, first to ${F.settings.target}. ${k} Odd ${plural(k, 'Card', 'Cards')} at ${f.total} players${f.total === 1 ? '' : ''}.</p>
-    ${bad ? `<p class="perr2" role="alert">${esc(PR.needs(p, f.total))} <button class="link inl" data-su="step" data-i="0">Back to Players</button></p>` : ''}
+    ${bad ? `<p class="perr2" role="alert">${esc(PR.needs(p, f.total))} <button class="link inl" data-su="step" data-i="0">Back to players</button></p>` : ''}
     <button class="link" data-su="presets">Change preset</button>`;
 }
 
@@ -148,14 +148,14 @@ function startPanel(f) {
     <details class="adv" ${F.adv ? 'open' : ''} data-su-adv><summary>Advanced</summary>
       <div class="advin"><p class="grp">Mode</p><div class="chiprow" role="radiogroup" aria-label="Mode">${mode('classic', 'Classic')}${mode('grid', 'Grid')}</div>
       <p class="grp">Play to</p><div class="stepper2"><button data-su="tminus" aria-label="Lower target" ${cur.target <= E.MIN_TARGET ? 'disabled' : ''}>−</button><output aria-live="polite">${cur.target} points</output><button data-su="tplus" aria-label="Raise target" ${cur.target >= E.MAX_TARGET ? 'disabled' : ''}>+</button></div>
-      <p class="grp">Save for later</p><form class="field" data-su-form="savepreset"><input data-su-in="saveName" value="${esc(T.saveName)}" maxlength="24" placeholder="Preset name" aria-label="Preset name" autocomplete="off"><button class="add" type="submit">Save</button></form>${T.saveErr ? `<p class="perr2" role="alert">${esc(T.saveErr)}</p>` : ''}</div></details>`;
+      <p class="grp">Save preset</p><form class="field" data-su-form="savepreset"><input data-su-in="saveName" value="${esc(T.saveName)}" maxlength="24" placeholder="Preset name" aria-label="Preset name" autocomplete="off"><button class="add" type="submit">Save</button></form>${T.saveErr ? `<p class="perr2" role="alert">${esc(T.saveErr)}</p>` : ''}</div></details>`;
 }
 
 function dockFor(f) {
   const step = F.step;
   const last = step === 3;
   const pr = last ? problem(f) : nextProblem(f, step);
-  const label = last ? 'Start round' : `Next: ${STEPS[step + 1]}`;
+  const label = last ? 'Start round 1' : `Next: ${STEPS[step + 1]}`;
   const why = pr ? `<p class="why" id="su-why">${esc(pr[0])} <button class="link inl" data-su="step" data-i="${pr[1]}">${esc(pr[2])}</button></p>` : '<p class="why" id="su-why" hidden></p>';
   return `<div class="dock">${why}<button class="btn pri" data-su="${last ? 'start' : 'next'}" ${pr ? 'disabled aria-disabled="true"' : ''} aria-describedby="su-why">${label}</button></div>`;
 }
@@ -168,7 +168,7 @@ export function html() {
     `<section class="panel" data-step="${i}" aria-label="Step ${i + 1} of 4, ${STEPS[i]}" ${i === F.step ? '' : 'inert aria-hidden="true"'}>${fn(f)}</section>`).join('');
   const from = T.slideFrom === null ? F.step : T.slideFrom;
   const dots = STEPS.map((s, i) => `<li><button class="dot2${i === F.step ? ' now' : i < F.step ? ' done' : ''}" data-su="step" data-i="${i}" ${i > F.step ? 'disabled' : ''} aria-label="Step ${i + 1}, ${s}" ${i === F.step ? 'aria-current="step"' : ''}>${i + 1}</button></li>`).join('');
-  return `<main class="su" data-step="${F.step}"><div class="top">${F.step === 0 ? `<button class="back" data-su="home" aria-label="Home">${icons.back()}</button>` : `<button class="back" data-su="back">${icons.back()}Back</button>`}<span class="sp"></span>
+  return `<main class="su" data-step="${F.step}"><div class="top">${F.step === 0 ? `<button class="back" data-su="home" aria-label="The Odd Card home">${icons.back()}</button>` : `<button class="back" data-su="back">${icons.back()}Back</button>`}<span class="sp"></span>
     <div class="prog"><ol aria-label="Steps" data-su-dots>${dots}</ol><span>Step ${F.step + 1} of 4: ${STEPS[F.step]}</span></div></div>
     <div class="viewport" data-su-view><div class="track" style="--tx:${-from * 100}%" data-to="${F.step}">${panels}</div></div>${dockFor(f)}
     <div class="sr" aria-live="polite" id="su-live">${esc(T.live)}</div></main>${T.sheet ? '' : ''}`;
