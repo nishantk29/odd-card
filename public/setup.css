@@ -8,7 +8,7 @@ body.v2{--bg:oklch(41.4% 0.092 158);--ink:oklch(97.8% 0.024 86);--tint:oklch(90.
 .su.pg{height:auto;min-height:100dvh}
 .su h1,.su h2{font-weight:800;letter-spacing:0;margin:0}
 .su .disp{font-family:"Rubik",sans-serif;font-weight:800;line-height:1.08;text-wrap:balance}
-.su .top{display:flex;align-items:center;gap:var(--s2);padding:max(var(--s3),env(safe-area-inset-top)) var(--s4) 0;min-height:56px}
+.su .top{display:flex;align-items:center;gap:var(--s2);padding:max(var(--s3),env(safe-area-inset-top)) calc(var(--s4) + var(--inset-r)) 0 calc(var(--s4) + var(--inset-l));min-height:56px}
 .su .sp{flex:1}
 .su .back{display:inline-flex;align-items:center;gap:2px;min-height:44px;padding:0 var(--s3) 0 0;color:var(--tint);font-size:var(--sm)}
 .su .back svg{width:16px;height:16px}
@@ -25,7 +25,7 @@ body.v2{--bg:oklch(41.4% 0.092 158);--ink:oklch(97.8% 0.024 86);--tint:oklch(90.
 .dot2[disabled]{cursor:default}
 .viewport{flex:1;min-height:0;overflow:hidden;touch-action:pan-y}
 .track{display:flex;height:100%;transform:translateX(var(--tx,0))}
-.panel{flex:0 0 100%;min-width:0;height:100%;overflow-y:auto;overscroll-behavior:contain;padding:var(--s4) var(--s4) var(--s5);display:flex;flex-direction:column;gap:var(--s4)}
+.panel{flex:0 0 100%;min-width:0;height:100%;overflow-y:auto;overscroll-behavior:contain;padding:var(--s4) calc(var(--s4) + var(--inset-r)) var(--s5) calc(var(--s4) + var(--inset-l));display:flex;flex-direction:column;gap:var(--s4)}
 .panel h1{font-size:var(--xl)}
 .panel h1:focus{outline:none}
 .roomline{display:flex;align-items:center;gap:var(--s2);font-size:var(--sm);color:var(--tint);min-height:44px}
@@ -55,7 +55,7 @@ body.v2{--bg:oklch(41.4% 0.092 158);--ink:oklch(97.8% 0.024 86);--tint:oklch(90.
 .perr2 .link{color:var(--ink)}
 .line2{color:var(--tint);font-size:var(--sm)}
 /* dock */
-.su .dock{position:sticky;bottom:0;z-index:10;margin:0;padding:var(--s3) var(--s4) max(var(--s4),env(safe-area-inset-bottom));display:grid;gap:var(--s2);background:linear-gradient(to bottom,transparent,var(--bg) 28%)}
+.su .dock{position:sticky;bottom:0;z-index:10;margin:0;padding:var(--s3) calc(var(--s4) + var(--inset-r)) max(var(--s4),env(safe-area-inset-bottom)) calc(var(--s4) + var(--inset-l));display:grid;gap:var(--s2);background:linear-gradient(to bottom,transparent,var(--bg) 28%)}
 .btn{display:flex;align-items:center;justify-content:center;gap:var(--s2);min-height:52px;width:100%;border-radius:var(--f-r-pill);font-size:var(--md);font-weight:600}
 .btn.pri{background:var(--acc);color:var(--on);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 2px 0 var(--acc-edge)}
 .btn.pri[disabled]{background:color-mix(in srgb,var(--ink) 14%,transparent);color:var(--tint);box-shadow:none}
@@ -88,7 +88,7 @@ body.v2{--bg:oklch(41.4% 0.092 158);--ink:oklch(97.8% 0.024 86);--tint:oklch(90.
 .pgbody .grp{margin-top:var(--s2)}
 /* sheet */
 .scrim2{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20}
-.su-sheet{--divider:color-mix(in oklab,rgb(255,247,230) 16%,var(--sheet));--divider-strong:color-mix(in oklab,rgb(255,247,230) 35%,var(--sheet));position:fixed;left:0;right:0;bottom:0;z-index:30;max-width:560px;margin:0 auto;border-radius:var(--f-r-card) var(--f-r-card) 0 0;background:var(--sheet);color:var(--ink);padding:var(--s5) var(--s4) max(var(--s4),env(safe-area-inset-bottom));box-shadow:0 -10px 24px -8px rgba(0,0,0,.6);display:grid;gap:var(--s3);max-height:88dvh;overflow:auto;animation:sheetin 180ms var(--ease) both}
+.su-sheet{--divider:color-mix(in oklab,rgb(255,247,230) 16%,var(--sheet));--divider-strong:color-mix(in oklab,rgb(255,247,230) 35%,var(--sheet));position:fixed;left:0;right:0;bottom:0;z-index:30;max-width:560px;margin:0 auto;border-radius:var(--f-r-card) var(--f-r-card) 0 0;background:var(--sheet);color:var(--ink);padding:var(--s5) calc(var(--s4) + var(--inset-r)) max(var(--s4),env(safe-area-inset-bottom)) calc(var(--s4) + var(--inset-l));box-shadow:0 -10px 24px -8px rgba(0,0,0,.6);display:grid;gap:var(--s3);max-height:88dvh;overflow:auto;animation:sheetin 180ms var(--ease) both}
 .su-sheet h2{font-size:var(--xl)}
 .su-sheet .vibe{color:var(--tint);font-size:var(--sm)}.su-sheet .meta{display:flex;gap:var(--s3);font-size:var(--xs);color:var(--tint)}
 .su-sheet .sel{display:inline-flex;gap:6px;align-items:center;font-size:var(--xs);font-weight:600;color:var(--acc)}.su-sheet .sel svg{width:16px;height:16px}
