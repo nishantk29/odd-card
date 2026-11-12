@@ -39,12 +39,15 @@ export function open(code = null) {
   deps.render();
 }
 
+// GET /api/room/:code answers { exists } with 200; a non-ok response or bad JSON counts as no room.
+const roomExists = async (res) => res.ok && (await res.json().catch(() => ({}))).exists === true;
+
 async function checkRoom() {
   const code = P?.code;
   try {
     const res = await fetch(`/api/room/${code}`);
     if (P?.code !== code) return;
-    if (!res.ok) { P.gone = true; P.err = 'Couldn’t find that room. Check the code and try again.'; }
+    if (!(await roomExists(res))) { P.gone = true; P.err = 'Couldn’t find that room. Check the code and try again.'; }
   } catch { if (P?.code === code) P.err = 'Couldn’t reach the server. Check your connection and try again.'; }
   deps.render();
 }
@@ -74,7 +77,7 @@ async function joinRoom() {
   P.wait = true; deps.render();
   try {
     const res = await fetch(`/api/room/${P.code}`);
-    if (!res.ok) { P.wait = false; const c = P.code; P.code = null; return flash(`Couldn’t find room ${c}. Check the code and try again.`); }
+    if (!(await roomExists(res))) { P.wait = false; const c = P.code; P.code = null; return flash(`Couldn’t find room ${c}. Check the code and try again.`); }
   } catch { P.wait = false; return flash('Couldn’t reach the server. Check your connection and try again.'); }
   P.wait = false;
   sendJoin();
