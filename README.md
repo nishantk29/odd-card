@@ -65,7 +65,7 @@ npm run e2e    # multi-phone browser test in Chromium
 
 The unit suite covers the game engine, the room reducer (including that no player's view ever contains another player's card), 180 simulated full games across every table size and both modes, the FAQ, presets, deep links, and gates for copy, motion, corner radius and safe areas.
 
-The browser tests in `test/e2e/` start `wrangler dev --local` on a free port and drive several phones at once. They use `playwright-core` and a system Chrome. Set `PW` to the `playwright-core` package path and `CHROME` to the browser binary if they are not in the default locations. Set `BASE=https://...` to run a read-only smoke test against a deployed site. The other e2e files (`back-nav`, `deep-links`, `host-reclaim`) run the same way with `node test/e2e/<name>.e2e.mjs`.
+The browser tests in `test/e2e/` start `wrangler dev --local` on a free port and drive several phones at once. They use `playwright-core` (an optional dev tool, not in `package.json`; install it yourself) and a system Chrome. Set `PW` to a `playwright-core` package directory and `CHROME` to the browser binary (default `/usr/bin/google-chrome`) if they are not in the default locations. Set `BASE=https://...` to run a read-only smoke test against a deployed site. The other e2e files (`back-nav`, `deep-links`, `host-reclaim`) run the same way with `node test/e2e/<name>.e2e.mjs`.
 
 ## Deploying
 

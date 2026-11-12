@@ -1,13 +1,14 @@
 // E2E (browser): deep links open the page they name, not the last saved view (audit Oct 30: #/faq, #/rules, #/presets
 // and the room links all showed "Who's at the table?" once a setup had been started).
 // Serves public/ from disk and stubs /api and /ws, so no Worker is needed. Chromium and WebKit at 390x844.
-//   PW=/workspace/forge/pw/node_modules/playwright-core node test/e2e/deep-links.e2e.mjs   (exit 1 on any failure)
+//   node test/e2e/deep-links.e2e.mjs   (exit 1 on any failure; PW=<path to playwright-core> to use a specific copy)
 // WebKit needs its libraries on LD_LIBRARY_PATH; without them the WebKit pass is skipped and says so.
 import { readFileSync, existsSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-const PW = process.env.PW || '/workspace/forge/pw/node_modules/playwright-core';
-const { chromium, webkit } = await import(`${PW}/index.mjs`);
+// playwright-core is an optional dev tool (not in package.json): install it, or set PW to its package directory.
+const PW = process.env.PW || 'playwright-core';
+const { chromium, webkit } = await import(PW === 'playwright-core' ? PW : `${PW}/index.mjs`);
 const ROOT = fileURLToPath(new URL('../../public/', import.meta.url));
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json', '.webmanifest': 'application/manifest+json' };
 const ORIGIN = 'http://odd.test';
