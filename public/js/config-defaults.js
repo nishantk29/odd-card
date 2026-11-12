@@ -9,7 +9,7 @@ export const DEFAULT_SEATING = 'one';
 // Where the room code and QR sit: on step 1 (Players) as approved, not on a step of their own.
 export const ROOM_CODE_STEP = 1;
 
-// Step 3 is called "Seating" in the carousel (Nishant can rename it to "How you're playing").
+// Step 3 is called "Seating" in the carousel (could be renamed to "How you're playing").
 export const SEATING_STEP_LABEL = 'Seating';
 
 // Carousel slide time in ms (transform only). Reduced motion swaps it for a short fade.

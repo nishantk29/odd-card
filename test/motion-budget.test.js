@@ -1,4 +1,4 @@
-// Motion budget (Nishant, 2026-10-29): presses are snappy (100-150ms, never scaled) and nothing runs over 400ms.
+// Motion budget (decided 2026-10-29): presses are snappy (100-150ms, never scaled) and nothing runs over 400ms.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

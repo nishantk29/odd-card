@@ -1,5 +1,5 @@
 @font-face{font-family:"Rubik";src:url("/fonts/rubik-var.woff2") format("woff2");font-weight:500 900;font-style:normal;font-display:swap}
-:root{--safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px); /* landscape safe areas (viewport-fit=cover), SPACING.md 3 */
+:root{--safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px); /* landscape safe areas (viewport-fit=cover) */
   --page-max:560px; --centre-gap:max(0px,calc((100vw - var(--page-max)) / 2)); /* a centred 560px column already sits this far from each edge */
   --inset-l:max(0px,calc(var(--safe-l) - var(--centre-gap))); --inset-r:max(0px,calc(var(--safe-r) - var(--centre-gap))); /* only the part of the inset the centring doesn't clear */
   --margin:16px; --pad-l:calc(var(--margin) + var(--inset-l)); --pad-r:calc(var(--margin) + var(--inset-r));
