@@ -34,7 +34,7 @@ export default {
     if (exists) {
       const stub = env.ROOM.get(env.ROOM.idFromName(exists[1].toUpperCase()));
       const res = await stub.fetch('https://room/exists');
-      return json({ exists: res.status === 200 }, res.status === 200 ? 200 : 404);
+      return json({ exists: res.status === 200 }); // 200 either way, so a wrong code never logs a console error
     }
 
     const ws = url.pathname.match(/^\/ws\/([A-Za-z]{6})$/);
