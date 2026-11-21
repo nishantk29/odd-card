@@ -275,4 +275,13 @@ button.gw:active{background:var(--gold)}
 /* (Polish #7's dock-hiding rule is not used here: in this app the dock holds Join and Next, which must stay reachable while typing.) */
 
 /* press feedback lands on press-in in --f-press (not scaled); release runs in --f-release (about 0.7x) */
-@media (prefers-reduced-motion:no-preference){html:not(.flat) :is(.tile,.next,.wordcard,.pbtn):active{transition-duration:var(--f-press)}}
+@media (prefers-reduced-motion:no-preference){html:not(.flat) :is(.tile,.next,.wordcard,.pbtn,.more-pill):active{transition-duration:var(--f-press)}}
+
+/* more-pill: the menu pill at the foot of a game screen, above Next; the menu sheet grows out of it (js/more-pill.js) */
+.more-pill{justify-self:center;display:inline-flex;align-items:center;gap:var(--s2);min-width:44px;min-height:48px;padding:0 var(--s5) 0 var(--s4);border-radius:var(--f-r-pill);background:#26262E;color:var(--ivory);box-shadow:inset 0 0 0 1px #3a3a44;font-weight:800;font-size:17px;
+  transition:transform var(--f-release) var(--ease-pop)}
+.more-pill svg{width:20px;height:20px;flex:none}
+.more-pill:active{transform:scale(var(--f-press-scale))}
+.more-pill[aria-expanded="true"]{opacity:0}
+.more-ghost{pointer-events:none}
+html.flat .more-pill{transform:none!important}
