@@ -7,6 +7,7 @@ import * as P from './phones.js';
 import * as Su from './setup.js';
 import { backClosesSheets } from './back-sheet.js';
 import { parseDeepLink } from './deep-link.js';
+import { morePillHtml, morphFrom, morphBack } from './more-pill.js';
 // Back (Android Back, the iOS edge swipe) closes the top sheet first, the same as a tap on its backdrop. The win and
 // round-over screens have no backdrop action, so Back leaves them alone.
 const backNav = backClosesSheets(() => {
@@ -171,8 +172,8 @@ function gameHTML() {
   else if (p === 'guess' && r.mode === 'classic') dock = `<div class="row2"><button class="next teal" data-act="guess" data-right="1">Right</button><button class="next red" data-act="guess" data-right="0">Wrong</button></div>`;
   else if (p === 'flip') dock = next('Show scores');
   else if (p === 'score') dock = next(g.win.status === 'win' ? 'Show the winner' : g.win.status === 'tie' ? 'Next: Tiebreak round' : `Next: Round ${r.no + 1}`);
-  return `<main class="wrap"><div class="bar"><span class="pill gold">Round ${r.no}</span><span class="pill">First to ${g.target}</span><span class="grow"></span>
-    <button class="iconbtn" data-act="menu" aria-label="Host menu">${icons.menu()}</button></div><div class="screen">${body}</div>${dock ? `<div class="dock">${dock}</div>` : ''}</main>`;
+  dock = morePillHtml({ label: 'Host menu', act: 'menu', open: T.sheet === 'menu' }) + dock; // the menu pill rides above Next
+  return `<main class="wrap"><div class="bar"><span class="pill gold">Round ${r.no}</span><span class="pill">First to ${g.target}</span></div><div class="screen">${body}</div>${dock ? `<div class="dock">${dock}</div>` : ''}</main>`;
 }
 
 // ---- sheets ------------------------------------------------------------
@@ -264,14 +265,24 @@ function render() {
   if (inSetup) Su.captureFocus();
   const shown = enterKeys(); // entrances already on screen do not replay on this repaint (Phones mode repaints on every room update)
   $app.innerHTML = active ? P.html() : inSetup ? Su.html() : S.view === 'game' && G() ? gameHTML() : homeHTML();
+  const hadSheet = !!$sheets.querySelector('.sheet'), oldMenu = $sheets.querySelector('.sheet.s-spy'), oldScrim = oldMenu?.previousElementSibling;
   $sheets.innerHTML = sheetsHTML();
   settle(shown);
+  morphMenu(hadSheet, oldMenu, oldScrim);
   restoreFocus(kept);
   if (inSetup) Su.afterRender();
   document.body.classList.toggle('open', !!$sheets.firstChild);
   if (S.view === 'game' && G() && ['score', 'over'].includes(G().phase)) animateScore();
   wake();
   backNav.sync();
+}
+
+// The menu sheet grows out of the bottom pill when it opens from no sheet, and shrinks back into it when it closes to none.
+function morphMenu(hadSheet, oldMenu, oldScrim) {
+  const pill = $app.querySelector('.more-pill'), menu = $sheets.querySelector('.sheet.s-spy');
+  pill?.setAttribute('aria-expanded', String(!!menu));
+  if (menu && !hadSheet) morphFrom(pill, menu);
+  else if (oldMenu && !$sheets.querySelector('.sheet')) morphBack(pill, oldMenu, oldScrim);
 }
 
 // Phones mode re-renders on every update from the room; keep what the player is typing.

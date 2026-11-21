@@ -6,6 +6,7 @@ import { esc, oddIcon, icons } from './art.js';
 import { holdCard, buzz, ODD_TEXT } from './holdcard.js';
 import { qrSvg, joinUrl } from './qr.js';
 import { MIN_PLAYERS } from './room.js';
+import { morePillHtml } from './more-pill.js';
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -278,8 +279,8 @@ export function html() {
   if (!P.view) return P.step === 'room' ? `<main class="wrap"><div class="screen">${stage('spy', `<span class="eyebrow">Room ${esc(P.code)}</span><h1 class="mid">${P.conn ? 'Joining…' : 'Connecting…'}</h1>${err()}`)}</div><div class="dock"><button class="mbtn" data-pa="leave" style="justify-content:center">Leave game</button></div></main>` : joinHTML();
   const v = P.view, g = v.game;
   const body = { lobby: lobbyBody, pass: passBody, clues: cluesBody, vote: voteBody, reveal: revealBody, guess: guessBody, flip: flipBody, score: scoreBody, over: scoreBody, ended: endedBody }[v.phase]?.(v) || '';
-  const dock = v.phase === 'ended' ? `<button class="next" data-pa="leave">The Odd Card home</button>` : dockFor(v);
-  const bar = `<div class="bar">${g ? `<span class="pill gold">Round ${g.round}</span><span class="pill">First to ${g.target}</span>` : `<span class="pill gold">Room ${esc(v.code)}</span>`}${P.conn ? '' : '<span class="pill">Reconnecting…</span>'}<span class="grow"></span><button class="iconbtn" data-act="pmenu" aria-label="Menu">${icons.menu()}</button></div>`;
+  const dock = morePillHtml({ label: 'Menu', act: 'pmenu' }) + (v.phase === 'ended' ? `<button class="next" data-pa="leave">The Odd Card home</button>` : dockFor(v)); // the menu pill rides above Next
+  const bar = `<div class="bar">${g ? `<span class="pill gold">Round ${g.round}</span><span class="pill">First to ${g.target}</span>` : `<span class="pill gold">Room ${esc(v.code)}</span>`}${P.conn ? '' : '<span class="pill">Reconnecting…</span>'}</div>`;
   return `<main class="wrap" data-phase="${v.phase}">${bar}<div class="screen">${P.err && v.phase !== 'lobby' ? err() : ''}${body}${v.phase === 'lobby' ? err() : ''}</div>${dock ? `<div class="dock">${dock}</div>` : ''}</main>`;
 }
 
