@@ -8,6 +8,7 @@ import * as Su from './setup.js';
 import { backClosesSheets } from './back-sheet.js';
 import { parseDeepLink } from './deep-link.js';
 import { morePillHtml, morphFrom, morphBack } from './more-pill.js';
+import { allGamesLink, gamesFooter } from './games.js';
 // Back (Android Back, the iOS edge swipe) closes the top sheet first, the same as a tap on its backdrop. The win and
 // round-over screens have no backdrop action, so Back leaves them alone.
 const backNav = backClosesSheets(() => {
@@ -76,7 +77,7 @@ function homeHTML() {
   const lastRoom = P.lastRoom();
   const rejoin = lastRoom ? `<button class="tile t-spy" data-act="rejoin"><h2>Rejoin</h2><p>Room ${esc(lastRoom)}</p>${icons.go()}</button>` : '';
   const resume = g && g.phase !== 'over' ? `<button class="tile t-spy" data-act="resume"><h2>Resume game</h2><p>Round ${g.round.no}, ${g.names.length} players</p>${icons.go()}</button>` : '';
-  return `<main class="wrap home"><header>${titleArt()}<h1>The Odd Card</h1><p class="sub">A word game with one player out of the loop.</p></header>
+  return `<main class="wrap home">${allGamesLink(icons.back())}<header>${titleArt()}<h1>The Odd Card</h1><p class="sub">A word game with one player out of the loop.</p></header>
   <div class="stack">
     <button class="tile t-gold" data-act="play"><h2>Host a game</h2><p>Own phones, one phone passed around, or both</p>${icons.go()}</button>
     <button class="tile t-teal" data-act="phones"><h2>Join a game</h2><p>Type a room code or scan the QR</p>${icons.go()}</button>${rejoin}${resume}
@@ -87,7 +88,7 @@ function homeHTML() {
       <li><b>Vote.</b> On three, point at the Odd Card. The accused Odd Card gets one guess at the word.</li>
       <li><b>Score.</b> Odd Cards score by hiding, Word Holders by catching. First to the target wins.</li></ol></section>
     <button class="faqlink" data-act="settings"><span><b>Settings</b> Animations, vibration, screen</span>${icons.go()}</button>
-  </div></main>`;
+  </div>${gamesFooter()}</main>`;
 }
 
 function dealBody(g) {
@@ -241,7 +242,8 @@ function sheetsHTML() {
   if (S.view === 'game' && g && g.phase === 'over' && T.sheet !== 'faq') return winPopup();
   if (!T.sheet) return '';
   const body = { menu: menuSheet, pmenu: P.menuSheet, settings: settingsSheet, history: historySheet, faq: faqSheet }[T.sheet]();
-  return `<div class="scrim" data-act="close"></div><div class="sheet${T.sheet === 'menu' || T.sheet === 'pmenu' ? ' s-spy' : ''}" role="dialog" aria-modal="true"><span class="grab"><span></span></span>${body}</div>`;
+  const title = /<h2>([^<"]*)<\/h2>/.exec(body)?.[1] || 'Menu'; // the dialog is named by its own title (already HTML-escaped)
+  return `<div class="scrim" data-act="close"></div><div class="sheet${T.sheet === 'menu' || T.sheet === 'pmenu' ? ' s-spy' : ''}" role="dialog" aria-modal="true" aria-label="${title}"><span class="grab"><span></span></span>${body}</div>`;
 }
 
 // ---- render ------------------------------------------------------------
