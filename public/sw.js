@@ -3,7 +3,7 @@
 // - Navigations: network-first, falling back to the cached app shell.
 // - /api/* and /ws/* never touch the cache.
 // VERSION is a content hash of every precached file, so it changes whenever a file does.
-const VERSION = '60a3535555';
+const VERSION = 'a26adcdbe9';
 const PREFIX = 'odd-card-';
 const CACHE = PREFIX + VERSION;
 
@@ -25,6 +25,7 @@ const PRECACHE = [
   '/js/deep-link.js',
   '/js/engine.js',
   '/js/faq.js',
+  '/js/games.js',
   '/js/holdcard.js',
   '/js/more-pill.js',
   '/js/phones.js',

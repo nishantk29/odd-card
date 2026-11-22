@@ -31,9 +31,26 @@ test('no network calls or external resources in the app', () => {
   for (const f of readdirSync(jsDir)) {
     if (f === 'phones.js') continue; // Phones mode: the only module that talks to the room server (same-origin /api and /ws)
     const src = readFileSync(join(jsDir, f), 'utf8');
+    if (f === 'games.js') { // the family links: plain <a href> targets, never fetched
+      assert.ok(!/fetch\(|XMLHttpRequest|WebSocket|<img|<script|src=/.test(src), 'games.js only links');
+      for (const [u] of src.matchAll(/https?:\/\/[^'"`\s]+/g)) assert.match(u, /^https:\/\/[a-z]+\.hatethespurs\.com$/, u);
+      continue;
+    }
     assert.ok(!/fetch\(|XMLHttpRequest|WebSocket|https?:\/\//.test(src.replace(/http:\/\/www\.w3\.org\/2000\/svg/g, '')), `${f} touches the network`);
   }
-  assert.ok(!/https?:\/\//.test(html.replace(/http:\/\/www\.w3\.org\/2000\/svg/g, '')));
+  // The share-preview image must be absolute; it is a meta value for link unfurlers, not a resource the page loads.
+  const noOg = html.replace(/<meta property="og:image" content="https:\/\/oddcard\.hatethespurs\.com\/icons\/icon-512\.png">/, '');
+  assert.ok(!/https?:\/\//.test(noOg.replace(/http:\/\/www\.w3\.org\/2000\/svg/g, '')));
+});
+
+test('head: og: title, description and the 512 icon as image; a one-line <noscript>', () => {
+  assert.match(html, /<meta property="og:title" content="The Odd Card">/);
+  assert.match(html, /<meta property="og:description" content="[^"]{20,}">/);
+  const img = /<meta property="og:image" content="https:\/\/oddcard\.hatethespurs\.com(\/icons\/icon-512\.png)">/.exec(html);
+  assert.ok(img && existsSync(join(pub, img[1])), 'og:image is the existing 512 icon');
+  const ns = html.match(/<noscript>.*<\/noscript>/g) || [];
+  assert.equal(ns.length, 1, 'one single-line <noscript>');
+  assert.match(ns[0], /needs JavaScript/);
 });
 
 const css = readFileSync(join(pub, 'styles.css'), 'utf8');
