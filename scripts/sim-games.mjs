@@ -2,10 +2,12 @@
 //   node scripts/sim-games.mjs [gamesPerCase]     (also run by test/sim.test.js)
 import * as E from '../public/js/engine.js';
 
+const SALT = Number(process.env.SIM_SEED) || 0; // release fuzz shifts every seed; 0 keeps the test's fixed games
+
 export function simulate(perCase = 20) {
   const stats = { games: 0, rounds: 0, steps: 0, ties: 0 };
   for (let n = E.MIN_PLAYERS; n <= E.MAX_PLAYERS; n++) for (const mode of E.MODES) for (let k = 0; k < perCase; k++) {
-    let seed = (n * 7919 + k * 104729 + (mode === 'grid' ? 13 : 0)) >>> 0;
+    let seed = (n * 7919 + k * 104729 + (mode === 'grid' ? 13 : 0) + SALT) >>> 0;
     const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
     const target = E.MIN_TARGET + Math.floor(rnd() * (E.MAX_TARGET - E.MIN_TARGET + 1));
     let s = E.createGame({ names: Array.from({ length: n }, (_, i) => `P${i}`), mode, target, seed: Math.floor(rnd() * 2 ** 32) });
